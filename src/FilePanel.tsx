@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-// import { DirEntry, readDir } from "@tauri-apps/plugin-fs";
+import { ReactElement, useEffect, useState } from "react";
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from "@tauri-apps/api/core";
 import * as Path from '@tauri-apps/api/path';
@@ -15,114 +14,91 @@ function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+type ClearState = {
+  state: "clear";
+};
+
+type LoadingState = {
+  state: "loading";
+  requestedPath: string;
+};
+
+type LoadedState = {
+  state: "loaded";
+  path: string;
+  parentPath: string | undefined;
+  directories: DirEntry[];
+  files: DirEntry[];
+};
+
+type ErrorState = {
+  state: "error";
+  errorPath: string;
+  errorMessage: string;
+};
+
+type State = ClearState | LoadingState | LoadedState | ErrorState;
+
+const Clear: ClearState = { state: "clear" };
+const requestedPathState = (path: string): LoadingState => ({ state: "loading", requestedPath: path });
+
 export default function FilePanel(props: { path: string | undefined }) {
-  const [entries, setEntries] = useState<DirEntry[]>();
-  const [path, setPath] = useState<string | undefined>(props.path);
-  const [parentPath, setParentPath] = useState<string | undefined>(undefined);
-  const [error, setError] = useState<string | undefined>(undefined);
-
-  // Derived state:
-  const isOpen = path !== undefined;
-
-  const files = useMemo(() => entries?.filter(file => !file.is_directory), [entries]);
-  const directories = useMemo(() => entries?.filter(file => file.is_directory), [entries]);
-
-  const fileCount = files?.length ?? 0;
-  const directoryCount = directories?.length ?? 0;
+  const [status, setStatus] = useState<State>(props.path === undefined ? Clear : requestedPathState(props.path));
 
   useEffect(() => {
-    if (path === undefined) {
-      setEntries([]);
-      setParentPath(undefined);
-      setError(undefined);
-    } else {
-      async function doit(path: string) {
+    async function doit() {
+      if (status.state === "loading") {
+        let parentPath: string | undefined;
+
         try {
-          const parent = await Path.dirname(path);
-          setParentPath(parent);
+          parentPath = await Path.dirname(status.requestedPath);
         } catch (e) {
-          // This is expeted: console.error("Failed to get parent path:", e);
-          setParentPath(undefined);
+          // This is expected: console.error("Failed to get parent path:", e);
+          parentPath = undefined;
         }
-        await sleep(0); // Simulate a delay for testing
-        const json = await invoke<string>("read_directory", { path: path });
+        await sleep(1000); // Simulate a delay for testing
+
+        const json = await invoke<string>("read_directory", { path: status.requestedPath });
         const result = JSON.parse(json);
         if (typeof result === "string") {
           // Handle error case
-          setError(result);
-          setEntries([]);
+          setStatus({ state: "error", errorPath: status.requestedPath, errorMessage: result })
         } else {
           const entries = result as DirEntry[];
-          setEntries(entries);
-          setError(undefined);
+          const files = entries.filter(file => !file.is_directory);
+          const directories = entries?.filter(file => file.is_directory);
+
+          setStatus({ state: "loaded", path: status.requestedPath, parentPath: parentPath, files: files, directories: directories })
         }
       }
-      doit(path);
     }
-  }, [path]);
 
-  function openPath() {
-    open({ title: "Open directory", directory: true, defaultPath: path })
-      .then((selectedPath) => {
-        if (selectedPath) {
-          setEntries(undefined);
-          setPath(selectedPath);
-        } else {
-          setPath(undefined);
-        }
-      });
-  }
+    doit();
+
+  }, [status]);
 
   return <div className="file-panel box">
-    <div className="header">
-      <div className="level is-mobile">
-        <div className="level-left">
-          <h2 className="is-marginless">{
-            isOpen
-              ? path
-              : "Open a directory to start"
-          }</h2>
-        </div>
-        <div className="level-right">
-          <div className="buttons has-addons">
-            {isOpen && <button className="button is-small is-info" disabled={parentPath === undefined} onClick={() => setPath(parentPath)}>..</button>}
-            {isOpen
-              ? <button className="button is-small is-info" onClick={() => setPath(undefined)}>&times;</button>
-              : <button className={`button is-small is-primary`} onClick={() => openPath()}>Open</button>
-            }
-          </div>
-        </div>
-      </div>
-    </div>
+    <Heading status={status} setStatus={setStatus} />
     <div className="main">
-      {!isOpen
-        ? "No directory selected"
-        : error !== undefined
-          ? <div className="notification is-danger">{error}</div>
-          : entries === undefined
-            ? "Loading..."
-            : <table className="table is-striped is-narrow is-fullwidth nowrap">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th align="right">Size</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {directories && <DirectoryList directories={directories} onDirectoryClick={async (directoryName) => setPath(await Path.join(path!, directoryName))} />}
-                {files && <FileList files={files} />}
-              </tbody>
-            </table>
+      {status.state === "error" && <div className="notification is-danger">{status.errorMessage}</div>}
+      {status.state === "loaded" &&
+        <table className="table is-striped is-narrow is-fullwidth nowrap">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th align="right">Size</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {status.directories && <DirectoryList directories={status.directories} onDirectoryClick={async (directoryName) => setStatus(requestedPathState(await Path.join(status.path, directoryName)))} />}
+            {status.files && <FileList files={status.files} />}
+          </tbody>
+        </table>
       }
     </div>
     <div className="status">
-      {!isOpen
-        ? "No directory selected"
-        : entries === undefined
-          ? "Loading..."
-          : `${directoryCount} directories, ${fileCount} files (${parentPath})`
-      }
+      <StatusBar status={status} />
     </div>
   </div>
 }
@@ -152,4 +128,73 @@ function FileItem(props: { file: DirEntry }) {
     <td align="right">{props.file.size}</td>
     <td>{new Date(props.file.time_modified * 1000).toLocaleString()}</td>
   </tr>
+}
+
+function Heading(props: { status: State, setStatus: (newStatus: State) => void }) {
+  let heading: ReactElement;
+  let buttons: ReactElement;
+
+  function openPath() {
+    open({ title: "Open directory", directory: true }) // TODO: , defaultPath: path
+      .then((selectedPath) => {
+        if (selectedPath) {
+          props.setStatus(requestedPathState(selectedPath))
+        }
+      });
+  }
+
+  function setPath(path?: string) {
+    if (path === undefined) {
+      props.setStatus(Clear);
+    } else {
+      props.setStatus(requestedPathState(path));
+    }
+  }
+
+  switch (props.status.state) {
+    case "clear":
+      heading = <>Please open a directory</>;
+      buttons = <button className={`button is-small is-primary`} onClick={() => openPath()}>Open</button>;
+      break;
+    case "loading":
+      heading = <>Loading</>;
+      buttons = <button className="button is-warning">Cancel</button>
+      break;
+    case "loaded":
+      heading = <h2 className="is-marginless">{props.status.path}</h2>;
+      buttons = <>
+        <button className="button is-info" disabled={props.status.parentPath === undefined} onClick={() => setPath((props.status as LoadedState).parentPath)}>..</button>
+        <button className="button is-info" onClick={() => setPath(undefined)}>&times;</button>
+      </>;
+      break;
+    case "error":
+      heading = <span className="has-text-danger">{props.status.errorPath}</span>;
+      buttons = <button className={`button is-small is-primary`} onClick={() => openPath()}>Open</button>;
+  }
+
+  return <div className="header">
+    <div className="level is-mobile">
+      <div className="level-left">
+        {heading}
+      </div>
+      <div className="level-right">
+        <div className="buttons has-addons are-small">
+          {buttons}
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+function StatusBar(props: { status: State }) {
+  switch (props.status.state) {
+    case "clear":
+      return <>No directory selected</>;
+    case "loading":
+      return <>Loading</>;
+    case "loaded":
+      return <>{props.status.directories.length} directories, {props.status.files.length} files [{props.status.parentPath}]</>;
+    case "error":
+      return <>Error: {props.status.errorMessage}</>
+  }
 }
