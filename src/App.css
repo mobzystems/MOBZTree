@@ -44,6 +44,10 @@ body {
   text-align: center;
 }
 
+/* .app > .status > * {
+  background-color: transparent;
+} */
+
 .file-panel {
   height: 100%;
   display: grid;

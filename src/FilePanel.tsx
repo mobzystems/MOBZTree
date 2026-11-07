@@ -2,6 +2,7 @@ import { ReactElement, useEffect, useState } from "react";
 import { open } from '@tauri-apps/plugin-dialog';
 import * as Path from '@tauri-apps/api/path';
 import { TreeDirectory, FileTree, TreeFile } from "./FileTree";
+import { TreeDiff } from "./TreeDiff";
 
 // function sleep(ms: number) {
 //   return new Promise(resolve => setTimeout(resolve, ms));
@@ -37,7 +38,8 @@ const requestedPathState = (path: string): LoadingState => ({ state: "loading", 
 export default function FilePanel(props: {
   path: string | undefined,
   onLoaded: (tree: FileTree | undefined) => void,
-  otherTree: FileTree | undefined
+  diff: TreeDiff | undefined,
+  options: { showDuplicate: boolean, showDeleted: boolean, showAdded: boolean }
 }) {
   const [status, setStatus] = useState<State>(props.path === undefined ? Clear : requestedPathState(props.path));
 
@@ -79,7 +81,7 @@ export default function FilePanel(props: {
             {status.currentDirectory.directories.length !== 0 &&
               <DirectoryList
                 tree={status.tree}
-                otherTree={props.otherTree}
+                diff={props.diff}
                 directories={status.currentDirectory.directories}
                 onDirectoryClick={newDirectory => setStatus({...status, currentDirectory: newDirectory})}
               />
@@ -87,9 +89,10 @@ export default function FilePanel(props: {
             {status.currentDirectory.files.length !== 0 &&
               <FileList 
                 tree={status.tree}
-                otherTree={props.otherTree}
+                diff={props.diff}
                 directoryPath={status.currentDirectory.fullPath}
                 files={status.currentDirectory.files}
+                options={props.options}
             />}
           </tbody>
         </table>
@@ -103,7 +106,7 @@ export default function FilePanel(props: {
 
 function DirectoryList(props: {
   tree: FileTree,
-  otherTree: FileTree | undefined,
+  diff: TreeDiff | undefined,
   directories: TreeDirectory[],
   onDirectoryClick: (newDirectory: TreeDirectory) => void
 }) {
@@ -111,7 +114,7 @@ function DirectoryList(props: {
     props.directories.map(directory => 
       <DirectoryItem key={directory.name}
         tree={props.tree}
-        otherTree={props.otherTree}
+        diff={props.diff}
         directory={directory}
         onClick={() => props.onDirectoryClick(directory)}
       />
@@ -121,21 +124,22 @@ function DirectoryList(props: {
 
 function DirectoryItem(props: {
   tree: FileTree,
-  otherTree: FileTree | undefined,
+  diff: TreeDiff | undefined,
   directory: TreeDirectory,
   onClick: () => void
 }) {
-  const state = props.otherTree === undefined
-    ? <>-</>
-    : props.otherTree.entryMap.get(props.tree.relativePath(props.directory.fullPath)) === undefined
-    ? <div className="tag is-warning">unique</div> : <div className="tag">duplicate</div>;
+  const relativePath = props.tree.relativePath(props.directory.fullPath);
+  const diffState = props.diff === undefined
+    ? undefined
+    : props.diff.getState(relativePath);
+  const status = (diffState && <div className={`tag ${diffState[1]}`}>{diffState[0]}</div>) || "-";
 
   return <tr>
     <td><a href="#" onClick={(e) => {
       e.preventDefault();
       props.onClick()
     }}>📁&nbsp;{props.directory.name}</a></td>
-    <td align="center">{state}</td>
+    <td align="center">{status}</td>
     <td></td>
     <td>{new Date(props.directory.modifiedTime * 1000).toLocaleString()}</td>
   </tr>;
@@ -143,27 +147,41 @@ function DirectoryItem(props: {
 
 function FileList(props: {
   tree: FileTree,
-  otherTree: FileTree | undefined,
+  diff: TreeDiff | undefined,
   directoryPath: string,
-  files: TreeFile[]
+  files: TreeFile[],
+  options: { showDuplicate: boolean, showDeleted: boolean, showAdded: boolean }
 }) {
-  return props.files.map(file => <FileItem key={file.name} tree={props.tree} otherTree={props.otherTree} directoryPath={props.directoryPath} file={file} />)
+  return props.files.map(file => 
+    <FileItem key={file.name}
+      tree={props.tree}
+      diff={props.diff} 
+      directoryPath={props.directoryPath} 
+      file={file}
+      options={props.options}
+    />
+  )
 }
 
 function FileItem(props: {
   tree: FileTree,
-  otherTree: FileTree | undefined,
+  diff: TreeDiff | undefined,
   directoryPath: string,
-  file: TreeFile
+  file: TreeFile,
+  options: { showDuplicate: boolean, showDeleted: boolean, showAdded: boolean }
 }) {
-  const state = props.otherTree === undefined
-    ? <></>
-    : props.otherTree.entryMap.get(props.tree.relativePath(props.directoryPath + Path.sep() + props.file.name)) === undefined
-    ? <div className="tag is-warning">unique</div> : <div className="tag">duplicate</div>;
+  const relativePath = props.tree.relativePath(props.directoryPath + Path.sep() + props.file.name);
+  const [text, style] = props.diff === undefined
+    ? [undefined, undefined]
+    : props.diff.getState(relativePath);
+  const status = (style !== undefined && <div className={`tag ${style}`}>{text}</div>) || "-";
+
+  if (text === "duplicate" && props.options.showDuplicate === false)
+    return undefined;
 
   return <tr>
     <td>📄&nbsp;{props.file.name}</td>
-    <td align="center">{state}</td>
+    <td align="center">{status}</td>
     <td align="right">{props.file.size}</td>
     <td>{new Date(props.file.modifiedTime * 1000).toLocaleString()}</td>
   </tr>
@@ -203,6 +221,10 @@ function Heading(props: { status: State, setStatus: (newStatus: State) => void }
       heading = <h2 className="is-marginless">{props.status.currentDirectory.fullPath}</h2>;
       buttons = <>
         <button className="button is-info"
+          disabled={props.status.currentDirectory.fullPath === props.status.tree.rootPath}
+          onClick={() => setPath((props.status as LoadedState).tree)}
+          >H</button>
+        <button className="button is-info"
           disabled={props.status.currentDirectory.parentDirectory === undefined}
           onClick={() => setPath((props.status as LoadedState).currentDirectory.parentDirectory)}
           >..</button>
@@ -235,7 +257,7 @@ function StatusBar(props: { status: State }) {
     case "loading":
       return <>Loading</>;
     case "loaded":
-      return <>{props.status.currentDirectory.directories.length} directories, {props.status.currentDirectory.files.length} files [{props.status.currentDirectory.parentDirectory?.fullPath || "none"}]</>;
+      return <>{props.status.currentDirectory.directories.length} directories, {props.status.currentDirectory.files.length} files</>;
     case "error":
       return <>Error: {props.status.errorMessage}</>
   }
