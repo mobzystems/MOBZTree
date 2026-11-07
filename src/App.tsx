@@ -20,7 +20,7 @@ export default function App() {
       </div>
     </div>
     <div className="main">
-      <FilePanel path="C:\" />
+      <FilePanel path={undefined} />
       <FilePanel path={undefined} />
     </div>
     <div className="status">

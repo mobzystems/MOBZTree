@@ -1,14 +1,7 @@
 import { ReactElement, useEffect, useState } from "react";
 import { open } from '@tauri-apps/plugin-dialog';
-import { invoke } from "@tauri-apps/api/core";
-import * as Path from '@tauri-apps/api/path';
-
-interface DirEntry {
-  name: string;
-  is_directory: boolean;
-  size: number;
-  time_modified: number; // Seconds since UNIX epoch
-}
+// import * as Path from '@tauri-apps/api/path';
+import { TreeDirectory, FileTree, TreeFile } from "./FileTree";
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -26,9 +19,8 @@ type LoadingState = {
 type LoadedState = {
   state: "loaded";
   path: string;
-  parentPath: string | undefined;
-  directories: DirEntry[];
-  files: DirEntry[];
+  tree: FileTree,
+  currentDirectory: TreeDirectory
 };
 
 type ErrorState = {
@@ -46,35 +38,20 @@ export default function FilePanel(props: { path: string | undefined }) {
   const [status, setStatus] = useState<State>(props.path === undefined ? Clear : requestedPathState(props.path));
 
   useEffect(() => {
-    async function doit() {
+    (async function doit() {
       if (status.state === "loading") {
-        let parentPath: string | undefined;
-
-        try {
-          parentPath = await Path.dirname(status.requestedPath);
-        } catch (e) {
-          // This is expected: console.error("Failed to get parent path:", e);
-          parentPath = undefined;
-        }
         await sleep(1000); // Simulate a delay for testing
 
-        const json = await invoke<string>("read_directory", { path: status.requestedPath });
-        const result = JSON.parse(json);
-        if (typeof result === "string") {
+        try {
+          const tree = await FileTree.load(status.requestedPath);
+          setStatus({ state: "loaded", path: status.requestedPath, tree: tree, currentDirectory: tree })
+        }
+        catch (e: any) {
           // Handle error case
-          setStatus({ state: "error", errorPath: status.requestedPath, errorMessage: result })
-        } else {
-          const entries = result as DirEntry[];
-          const files = entries.filter(file => !file.is_directory);
-          const directories = entries?.filter(file => file.is_directory);
-
-          setStatus({ state: "loaded", path: status.requestedPath, parentPath: parentPath, files: files, directories: directories })
+          setStatus({ state: "error", errorPath: status.requestedPath, errorMessage: e.toString() })
         }
       }
-    }
-
-    doit();
-
+    })();
   }, [status]);
 
   return <div className="file-panel box">
@@ -91,8 +68,13 @@ export default function FilePanel(props: { path: string | undefined }) {
             </tr>
           </thead>
           <tbody>
-            {status.directories && <DirectoryList directories={status.directories} onDirectoryClick={async (directoryName) => setStatus(requestedPathState(await Path.join(status.path, directoryName)))} />}
-            {status.files && <FileList files={status.files} />}
+            {status.currentDirectory.directories.length !== 0 &&
+              <DirectoryList
+                directories={status.currentDirectory.directories}
+                onDirectoryClick={newDirectory => setStatus({...status, currentDirectory: newDirectory})}
+              />
+            }
+            {status.currentDirectory.files.length !== 0 && <FileList files={status.currentDirectory.files} />}
           </tbody>
         </table>
       }
@@ -103,30 +85,34 @@ export default function FilePanel(props: { path: string | undefined }) {
   </div>
 }
 
-function DirectoryList(props: { directories: DirEntry[], onDirectoryClick: (directoryName: string) => void }) {
-  return props.directories.map(directory => <DirectoryItem key={directory.name} directory={directory} onClick={() => props.onDirectoryClick(directory.name)} />);
+function DirectoryList(props: { directories: TreeDirectory[], onDirectoryClick: (newDirectory: TreeDirectory) => void }) {
+  return <>{
+    props.directories.map(directory => 
+      <DirectoryItem key={directory.name} directory={directory} onClick={() => props.onDirectoryClick(directory)} />
+    )
+  }</>;
 }
 
-function DirectoryItem(props: { directory: DirEntry, onClick: () => void }) {
+function DirectoryItem(props: { directory: TreeDirectory, onClick: () => void }) {
   return <tr>
     <td><a href="#" onClick={(e) => {
       e.preventDefault();
       props.onClick()
     }}>📁&nbsp;{props.directory.name}</a></td>
     <td></td>
-    <td>{new Date(props.directory.time_modified * 1000).toLocaleString()}</td>
+    <td>{new Date(props.directory.modifiedTime * 1000).toLocaleString()}</td>
   </tr>;
 }
 
-function FileList(props: { files: DirEntry[] }) {
+function FileList(props: { files: TreeFile[] }) {
   return props.files.map(file => <FileItem key={file.name} file={file} />)
 }
 
-function FileItem(props: { file: DirEntry }) {
+function FileItem(props: { file: TreeFile }) {
   return <tr>
     <td>📄&nbsp;{props.file.name}</td>
     <td align="right">{props.file.size}</td>
-    <td>{new Date(props.file.time_modified * 1000).toLocaleString()}</td>
+    <td>{new Date(props.file.modifiedTime * 1000).toLocaleString()}</td>
   </tr>
 }
 
@@ -143,11 +129,11 @@ function Heading(props: { status: State, setStatus: (newStatus: State) => void }
       });
   }
 
-  function setPath(path?: string) {
-    if (path === undefined) {
+  function setPath(newDirectory?: TreeDirectory) {
+    if (newDirectory === undefined) {
       props.setStatus(Clear);
     } else {
-      props.setStatus(requestedPathState(path));
+      props.setStatus({...(props.status as LoadedState), currentDirectory: newDirectory});
     }
   }
 
@@ -161,9 +147,12 @@ function Heading(props: { status: State, setStatus: (newStatus: State) => void }
       buttons = <button className="button is-warning">Cancel</button>
       break;
     case "loaded":
-      heading = <h2 className="is-marginless">{props.status.path}</h2>;
+      heading = <h2 className="is-marginless">{props.status.currentDirectory.fullPath}</h2>;
       buttons = <>
-        <button className="button is-info" disabled={props.status.parentPath === undefined} onClick={() => setPath((props.status as LoadedState).parentPath)}>..</button>
+        <button className="button is-info"
+          disabled={props.status.currentDirectory.parentDirectory === undefined}
+          onClick={() => setPath((props.status as LoadedState).currentDirectory.parentDirectory)}
+          >..</button>
         <button className="button is-info" onClick={() => setPath(undefined)}>&times;</button>
       </>;
       break;
@@ -193,7 +182,7 @@ function StatusBar(props: { status: State }) {
     case "loading":
       return <>Loading</>;
     case "loaded":
-      return <>{props.status.directories.length} directories, {props.status.files.length} files [{props.status.parentPath}]</>;
+      return <>{props.status.currentDirectory.directories.length} directories, {props.status.currentDirectory.files.length} files [{props.status.currentDirectory.parentDirectory?.fullPath || "none"}]</>;
     case "error":
       return <>Error: {props.status.errorMessage}</>
   }
