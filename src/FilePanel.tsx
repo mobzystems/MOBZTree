@@ -39,7 +39,7 @@ export default function FilePanel(props: {
   path: string | undefined,
   onLoaded: (tree: FileTree | undefined) => void,
   diff: TreeDiff | undefined,
-  options: { showDuplicate: boolean, showDeleted: boolean, showAdded: boolean }
+  options: { showDuplicate: boolean, showDeleted: boolean, showAdded: boolean, compareSize: boolean, compareTime: boolean }
 }) {
   const [status, setStatus] = useState<State>(props.path === undefined ? Clear : requestedPathState(props.path));
 
@@ -131,7 +131,7 @@ function DirectoryItem(props: {
   const relativePath = props.tree.relativePath(props.directory.fullPath);
   const diffState = props.diff === undefined
     ? undefined
-    : props.diff.getState(relativePath);
+    : props.diff.getState(relativePath, false, false);
   const status = (diffState && <div className={`tag ${diffState[1]}`}>{diffState[0]}</div>) || "-";
 
   return <tr>
@@ -150,7 +150,7 @@ function FileList(props: {
   diff: TreeDiff | undefined,
   directoryPath: string,
   files: TreeFile[],
-  options: { showDuplicate: boolean, showDeleted: boolean, showAdded: boolean }
+  options: { showDuplicate: boolean, showDeleted: boolean, showAdded: boolean, compareSize: boolean, compareTime: boolean }
 }) {
   return props.files.map(file => 
     <FileItem key={file.name}
@@ -168,15 +168,19 @@ function FileItem(props: {
   diff: TreeDiff | undefined,
   directoryPath: string,
   file: TreeFile,
-  options: { showDuplicate: boolean, showDeleted: boolean, showAdded: boolean }
+  options: { showDuplicate: boolean, showDeleted: boolean, showAdded: boolean, compareSize: boolean, compareTime: boolean }
 }) {
   const relativePath = props.tree.relativePath(props.directoryPath + Path.sep() + props.file.name);
   const [text, style] = props.diff === undefined
     ? [undefined, undefined]
-    : props.diff.getState(relativePath);
+    : props.diff.getState(relativePath, props.options.compareSize, props.options.compareTime);
   const status = (style !== undefined && <div className={`tag ${style}`}>{text}</div>) || "-";
 
   if (text === "duplicate" && props.options.showDuplicate === false)
+    return undefined;
+  if (text === "deleted" && props.options.showDeleted == false)
+    return undefined;
+  if (text === "added" && props.options.showAdded == false)
     return undefined;
 
   return <tr>

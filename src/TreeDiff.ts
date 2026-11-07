@@ -3,7 +3,7 @@ import { FileTree } from "./FileTree";
 export class TreeDiff {
   constructor(protected left: FileTree, protected right: FileTree) {}
 
-  getState(path: string) {
+  getState(path: string, compareSize: boolean, compareTime: boolean) {
     const leftItem = this.left.entryMap.get(path);
     const rightItem = this.right.entryMap.get(path);
 
@@ -16,12 +16,12 @@ export class TreeDiff {
         // Handle files:
         if ("size" in leftItem && "size" in rightItem) {
           if (
-            // leftItem.modifiedTime === rightItem.modifiedTime &&
-            leftItem.size === rightItem.size
+            (!compareTime || leftItem.modifiedTime === rightItem.modifiedTime) &&
+            (!compareSize || leftItem.size === rightItem.size)
           )
             return ["duplicate", "is-light"];
           else
-            return ["size", "is-warning"];
+            return ["changed", "is-warning"];
         } else {
           // Directories???
           return ["dir", "is-info"];
