@@ -14,8 +14,7 @@ fn greet(name: &str) -> String {
 //     read_dir(name).unwrap().collect()
 // }
 
-#[derive(Debug)]
-#[derive(serde::Serialize)]
+#[derive(Debug, serde::Serialize)]
 struct FileSystemEntry {
     name: String,
     is_directory: bool,
@@ -34,12 +33,20 @@ fn read_directory(path: &str) -> String {
     for entry in result.unwrap() {
         let entry = entry.unwrap();
         let meta = entry.path().metadata().unwrap();
-        entries.push(FileSystemEntry {
-            name: entry.file_name().to_string_lossy().into_owned(),
-            is_directory: meta.is_dir(),
-            size: meta.len(),
-            time_modified: meta.modified().ok().expect("No time").duration_since(std::time::SystemTime::UNIX_EPOCH).expect("Failed to calculate duration").as_secs()
-        });
+        if !meta.is_symlink() {
+            entries.push(FileSystemEntry {
+                name: entry.file_name().to_string_lossy().into_owned(),
+                is_directory: meta.is_dir(),
+                size: meta.len(),
+                time_modified: meta
+                    .modified()
+                    .ok()
+                    .expect("No time")
+                    .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                    .expect("Failed to calculate duration")
+                    .as_secs(),
+            });
+        }
     }
     serde_json::to_string(&entries).unwrap()
 }
