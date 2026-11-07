@@ -1,11 +1,11 @@
 import { ReactElement, useEffect, useState } from "react";
 import { open } from '@tauri-apps/plugin-dialog';
-// import * as Path from '@tauri-apps/api/path';
+import * as Path from '@tauri-apps/api/path';
 import { TreeDirectory, FileTree, TreeFile } from "./FileTree";
 
-function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+// function sleep(ms: number) {
+//   return new Promise(resolve => setTimeout(resolve, ms));
+// }
 
 type ClearState = {
   state: "clear";
@@ -34,22 +34,29 @@ type State = ClearState | LoadingState | LoadedState | ErrorState;
 const Clear: ClearState = { state: "clear" };
 const requestedPathState = (path: string): LoadingState => ({ state: "loading", requestedPath: path });
 
-export default function FilePanel(props: { path: string | undefined }) {
+export default function FilePanel(props: {
+  path: string | undefined,
+  onLoaded: (tree: FileTree | undefined) => void,
+  otherTree: FileTree | undefined
+}) {
   const [status, setStatus] = useState<State>(props.path === undefined ? Clear : requestedPathState(props.path));
 
   useEffect(() => {
     (async function doit() {
       if (status.state === "loading") {
-        await sleep(1000); // Simulate a delay for testing
+        // await sleep(1000); // Simulate a delay for testing
 
         try {
           const tree = await FileTree.load(status.requestedPath);
           setStatus({ state: "loaded", path: status.requestedPath, tree: tree, currentDirectory: tree })
+          props.onLoaded(tree);
         }
         catch (e: any) {
           // Handle error case
           setStatus({ state: "error", errorPath: status.requestedPath, errorMessage: e.toString() })
         }
+      } else if (status.state === "clear") {
+        props.onLoaded(undefined);
       }
     })();
   }, [status]);
@@ -63,6 +70,7 @@ export default function FilePanel(props: { path: string | undefined }) {
           <thead>
             <tr>
               <th>Name</th>
+              <th align="center">Status</th>
               <th align="right">Size</th>
               <th>Time</th>
             </tr>
@@ -70,11 +78,19 @@ export default function FilePanel(props: { path: string | undefined }) {
           <tbody>
             {status.currentDirectory.directories.length !== 0 &&
               <DirectoryList
+                tree={status.tree}
+                otherTree={props.otherTree}
                 directories={status.currentDirectory.directories}
                 onDirectoryClick={newDirectory => setStatus({...status, currentDirectory: newDirectory})}
               />
             }
-            {status.currentDirectory.files.length !== 0 && <FileList files={status.currentDirectory.files} />}
+            {status.currentDirectory.files.length !== 0 &&
+              <FileList 
+                tree={status.tree}
+                otherTree={props.otherTree}
+                directoryPath={status.currentDirectory.fullPath}
+                files={status.currentDirectory.files}
+            />}
           </tbody>
         </table>
       }
@@ -85,32 +101,69 @@ export default function FilePanel(props: { path: string | undefined }) {
   </div>
 }
 
-function DirectoryList(props: { directories: TreeDirectory[], onDirectoryClick: (newDirectory: TreeDirectory) => void }) {
+function DirectoryList(props: {
+  tree: FileTree,
+  otherTree: FileTree | undefined,
+  directories: TreeDirectory[],
+  onDirectoryClick: (newDirectory: TreeDirectory) => void
+}) {
   return <>{
     props.directories.map(directory => 
-      <DirectoryItem key={directory.name} directory={directory} onClick={() => props.onDirectoryClick(directory)} />
+      <DirectoryItem key={directory.name}
+        tree={props.tree}
+        otherTree={props.otherTree}
+        directory={directory}
+        onClick={() => props.onDirectoryClick(directory)}
+      />
     )
   }</>;
 }
 
-function DirectoryItem(props: { directory: TreeDirectory, onClick: () => void }) {
+function DirectoryItem(props: {
+  tree: FileTree,
+  otherTree: FileTree | undefined,
+  directory: TreeDirectory,
+  onClick: () => void
+}) {
+  const state = props.otherTree === undefined
+    ? <>-</>
+    : props.otherTree.entryMap.get(props.tree.relativePath(props.directory.fullPath)) === undefined
+    ? <div className="tag is-warning">unique</div> : <div className="tag">duplicate</div>;
+
   return <tr>
     <td><a href="#" onClick={(e) => {
       e.preventDefault();
       props.onClick()
     }}>📁&nbsp;{props.directory.name}</a></td>
+    <td align="center">{state}</td>
     <td></td>
     <td>{new Date(props.directory.modifiedTime * 1000).toLocaleString()}</td>
   </tr>;
 }
 
-function FileList(props: { files: TreeFile[] }) {
-  return props.files.map(file => <FileItem key={file.name} file={file} />)
+function FileList(props: {
+  tree: FileTree,
+  otherTree: FileTree | undefined,
+  directoryPath: string,
+  files: TreeFile[]
+}) {
+  return props.files.map(file => <FileItem key={file.name} tree={props.tree} otherTree={props.otherTree} directoryPath={props.directoryPath} file={file} />)
 }
 
-function FileItem(props: { file: TreeFile }) {
+function FileItem(props: {
+  tree: FileTree,
+  otherTree: FileTree | undefined,
+  directoryPath: string,
+  file: TreeFile
+}) {
+  const state = props.otherTree === undefined
+    ? <></>
+    : props.otherTree.entryMap.get(props.tree.relativePath(props.directoryPath + Path.sep() + props.file.name)) === undefined
+    ? <div className="tag is-warning">unique</div> : <div className="tag">duplicate</div>;
+
   return <tr>
     <td>📄&nbsp;{props.file.name}</td>
+    <td align="center">{state}</td>
     <td align="right">{props.file.size}</td>
     <td>{new Date(props.file.modifiedTime * 1000).toLocaleString()}</td>
   </tr>

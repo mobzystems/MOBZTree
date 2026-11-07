@@ -1,7 +1,12 @@
+import { useState } from "react";
 import "./App.css";
 import FilePanel from "./FilePanel";
+import { FileTree } from "./FileTree";
 
 export default function App() {
+  const [leftTree, setLeftTree] = useState<FileTree>();
+  const [rightTree, setRightTree] = useState<FileTree>();
+
   return <div className="app debug-NOT">
     <div className="header level is-mobile">
       <div className="level-left">
@@ -13,15 +18,14 @@ export default function App() {
       <div className="level-right">
         <div className="level-item">
           <div className="buttons are-small">
-            <button className="button is-info" onClick={() => alert(123)}>Button 1</button>
-            <button className="button is-link">Button 2</button>
+            <button className="button is-primary" onClick={() => alert(`${leftTree?.rootPath} / ${rightTree?.rootPath}`)}>Compare</button>
           </div>
         </div>
       </div>
     </div>
     <div className="main">
-      <FilePanel path={undefined} />
-      <FilePanel path={undefined} />
+      <FilePanel path={undefined} onLoaded={setLeftTree} otherTree={rightTree} />
+      <FilePanel path={undefined} onLoaded={setRightTree} otherTree={leftTree} />
     </div>
     <div className="status">
       <div className="buttons are-small">
