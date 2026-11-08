@@ -184,7 +184,8 @@ function FileItem(props: {
     : props.diff.getState(relativePath, props.options.compareSize, props.options.compareTime);
   const status = (style !== undefined && <div className={`tag ${style}`}>{text}</div>) || "-";
 
-  if (text === "duplicate" && props.options.showUnchanged === false)
+  // Suppress showing files that were filtered out
+  if (text === "unchanged" && props.options.showUnchanged === false)
     return undefined;
   if (text === "deleted" && props.options.showDeleted == false)
     return undefined;
