@@ -65,12 +65,16 @@ export default function FilePanel(props: {
 }) {
   const [status, setStatus] = useState<State>(props.path === undefined ? Clear : requestedPathState(props.path));
 
+  const [lastPath, setlastPath] = useState<string | undefined>(props.path);
+
   console.info(`Rendering FilePanel '${props.name}' with current directory is '${props.currentDirectory}'`);
 
   useEffect(() => {
     (async function doit() {
       if (status.state === "loading") {
         // await sleep(1000); // Simulate a delay for testing
+
+        setlastPath(status.requestedPath);
 
         try {
           const tree = await FileTree.load(status.requestedPath);
@@ -111,7 +115,7 @@ export default function FilePanel(props: {
   }
 
   return <div className="file-panel box">
-    <Heading status={status} setStatus={setStatus} onDirectoryChanged={changeDir} />
+    <Heading status={status} setStatus={setStatus} onDirectoryChanged={changeDir} lastPath={lastPath} />
     <div className="main">
       {status.state === "error" && <div className="notification is-danger">{status.errorMessage}</div>}
       {status.state === "loaded" &&
@@ -280,13 +284,15 @@ function FileItem(props: {
 function Heading(props: {
   status: State,
   setStatus: (newStatus: State) => void,
-  onDirectoryChanged: (newDirectory: TreeDirectory) => void
+  onDirectoryChanged: (newDirectory: TreeDirectory) => void,
+  lastPath: string | undefined
 }) {
   let heading: ReactElement;
   let buttons: ReactElement;
 
   function openPath() {
-    open({ title: "Open directory", directory: true }) // TODO: , defaultPath: path
+    // const defaultPath = props.status.state === "loaded"
+    open({ title: "Open directory", directory: true, defaultPath: props.lastPath })
       .then((selectedPath) => {
         if (selectedPath) {
           props.setStatus(requestedPathState(selectedPath))

@@ -8,6 +8,9 @@ export default function App() {
   const [leftTree, setLeftTree] = useState<FileTree>();
   const [rightTree, setRightTree] = useState<FileTree>();
 
+  // const [lastPathLeft, setLastPathLeft] = useState<string>();
+  // const [lastPathRight, setLastPathRight] = useState<string>();
+  
   const [compareSize, setCompareSize] = useState(false);
   const [compareTime, setCompareTime] = useState(false);
 
