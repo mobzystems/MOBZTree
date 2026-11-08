@@ -32,20 +32,23 @@ fn read_directory(path: &str) -> String {
     let mut entries = Vec::new();
     for entry in result.unwrap() {
         let entry = entry.unwrap();
-        let meta = entry.path().metadata().unwrap();
-        if !meta.is_symlink() {
-            entries.push(FileSystemEntry {
-                name: entry.file_name().to_string_lossy().into_owned(),
-                is_directory: meta.is_dir(),
-                size: meta.len(),
-                time_modified: meta
-                    .modified()
-                    .ok()
-                    .expect("No time")
-                    .duration_since(std::time::SystemTime::UNIX_EPOCH)
-                    .expect("Failed to calculate duration")
-                    .as_secs(),
-            });
+        let meta = entry.path().metadata();
+        if meta.is_ok() {
+            let meta = meta.unwrap();
+            if !meta.is_symlink() {
+                entries.push(FileSystemEntry {
+                    name: entry.file_name().to_string_lossy().into_owned(),
+                    is_directory: meta.is_dir(),
+                    size: meta.len(),
+                    time_modified: meta
+                        .modified()
+                        .ok()
+                        .expect("No time")
+                        .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                        .expect("Failed to calculate duration")
+                        .as_secs(),
+                });
+            }
         }
     }
     serde_json::to_string(&entries).unwrap()
