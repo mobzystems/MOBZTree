@@ -1,7 +1,7 @@
 {
-  "name": "tauri-v2-test",
+  "name": "MOBZTree",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.7.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

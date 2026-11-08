@@ -3,6 +3,20 @@
 version = 4
 
 [[package]]
+name = "MOBZTree"
+version = "0.7.0"
+dependencies = [
+ "fs",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-fs",
+ "tauri-plugin-opener",
+]
+
+[[package]]
 name = "adler2"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3678,20 +3692,6 @@ dependencies = [
  "urlpattern",
  "uuid",
  "walkdir",
-]
-
-[[package]]
-name = "tauri-v2-test"
-version = "0.1.0"
-dependencies = [
- "fs",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-fs",
- "tauri-plugin-opener",
 ]
 
 [[package]]

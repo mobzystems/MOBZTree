@@ -1,8 +1,8 @@
 [package]
-name = "tauri-v2-test"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+name = "MOBZTree"
+version = "0.7.0"
+description = "Visually compare the contents of two directory trees"
+authors = ["MOBZystems, Home of Tools - www.mobzystems.com"]
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -11,7 +11,7 @@ edition = "2024"
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "tauri_v2_test_lib"
+name = "mobztree_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -31,6 +31,6 @@ fs = "0.0.6"
 [profile.release]
 codegen-units = 1
 lto = true
-opt-level = 3 # 3 is 'all'
+opt-level = "s" # 3 is 'all', 's' is size
 panic = "abort"
 strip = true
