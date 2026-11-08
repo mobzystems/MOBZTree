@@ -47,7 +47,7 @@ export class TreeDirectory extends DiskItem {
       ? await Path.join(this.parentDirectory.fullPath, this.name)
       : this.name;
 
-    console.info(`Loading ${this.fullPath}`);
+    // console.info(`Loading ${this.fullPath}`);
 
     const json = await invoke<string>("read_directory", { path: this.fullPath });
     const result = JSON.parse(json);
@@ -102,6 +102,7 @@ export class FileTree extends TreeDirectory {
     tree.name = await Path.basename(path);
     
     // Now fill the entry map
+
     function mapEntries(directory: TreeDirectory) {
       // Add all files with a RELATIVE path
       for (let file of directory.files) {
@@ -117,6 +118,9 @@ export class FileTree extends TreeDirectory {
       }
     }
 
+    // Add the root first
+    tree.entryMap.set("", tree);
+    // Then add the rest of the tree
     mapEntries(tree);
 
     return tree;

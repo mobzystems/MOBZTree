@@ -15,9 +15,11 @@ export default function App() {
   const [showChanged, setShowChanged] = useState(true);
   const [showExtra, setShowExtra] = useState(true);
 
+  const [currentDirectory, setCurrentDirectory] = useState<string>();
+
   const diff = useMemo(() => {
     if (leftTree !== undefined && rightTree !== undefined)
-      return new TreeDiff(leftTree, rightTree);
+      return new TreeDiff(leftTree, rightTree, compareSize, compareTime);
     else
       return undefined;
   }, [leftTree, rightTree, compareSize, compareTime]);
@@ -28,6 +30,12 @@ export default function App() {
     showExtra: showExtra,
     compareSize: compareSize,
     compareTime: compareTime
+  }
+
+  function changeDir(relativePath: string) {
+    // TODO: if syncing
+    console.info(`Changing current directory from '${currentDirectory}' to '${relativePath}'`)
+    setCurrentDirectory(relativePath);
   }
 
   return <div className="app debug-NOT">
@@ -60,8 +68,8 @@ export default function App() {
       </div>
     </div>
     <div className="main">
-      <FilePanel path={undefined} onLoaded={setLeftTree} diff={diff} options={filterOptions} />
-      <FilePanel path={undefined} onLoaded={setRightTree} diff={diff} options={filterOptions} />
+      <FilePanel name="Left" path={undefined} onLoaded={setLeftTree} diff={diff} options={filterOptions} currentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
+      <FilePanel name="Right" path={undefined} onLoaded={setRightTree} diff={diff} options={filterOptions} currentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
     </div>
     <div className="status">
       <div className="buttons are-small">

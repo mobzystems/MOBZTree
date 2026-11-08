@@ -21,7 +21,8 @@ type LoadedState = {
   state: "loaded";
   path: string;
   tree: FileTree,
-  currentDirectory: TreeDirectory
+  currentDirectory: TreeDirectory,
+  message: string | undefined
 };
 
 type ErrorState = {
@@ -44,12 +45,17 @@ export interface FilterOptions {
 }
 
 export default function FilePanel(props: {
+  name: string,
   path: string | undefined,
   onLoaded: (tree: FileTree | undefined) => void,
   diff: TreeDiff | undefined,
-  options: FilterOptions
+  options: FilterOptions,
+  currentDirectory: string | undefined,
+  onChangeCurrentDirectory: (relativePath: string) => void
 }) {
   const [status, setStatus] = useState<State>(props.path === undefined ? Clear : requestedPathState(props.path));
+
+  console.info(`Rendering FilePanel '${props.name}' with current directory is '${props.currentDirectory}'`);
 
   useEffect(() => {
     (async function doit() {
@@ -58,7 +64,7 @@ export default function FilePanel(props: {
 
         try {
           const tree = await FileTree.load(status.requestedPath);
-          setStatus({ state: "loaded", path: status.requestedPath, tree: tree, currentDirectory: tree })
+          setStatus({ state: "loaded", path: status.requestedPath, tree: tree, currentDirectory: tree, message: undefined })
           props.onLoaded(tree);
         }
         catch (e: any) {
@@ -71,46 +77,73 @@ export default function FilePanel(props: {
     })();
   }, [status]);
 
-  return <div className="file-panel box">
-    <Heading status={status} setStatus={setStatus} />
-    <div className="main">
-      {status.state === "error" && <div className="notification is-danger">{status.errorMessage}</div>}
-      {status.state === "loaded" &&
-        <table className="table is-striped is-narrow is-fullwidth nowrap">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th align="center">Status</th>
-              <th align="right">Size</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {status.currentDirectory.directories.length !== 0 &&
-              <DirectoryList
-                tree={status.tree}
-                diff={props.diff}
-                directories={status.currentDirectory.directories}
-                options={props.options}
-                onDirectoryClick={newDirectory => setStatus({ ...status, currentDirectory: newDirectory })}
-              />
-            }
-            {status.currentDirectory.files.length !== 0 &&
-              <FileList
-                tree={status.tree}
-                diff={props.diff}
-                directoryPath={status.currentDirectory.fullPath}
-                files={status.currentDirectory.files}
-                options={props.options}
-              />}
-          </tbody>
-        </table>
+  useEffect(() => {
+    console.info(`FilePanel '${props.name}: current directory is now '${props.currentDirectory}'`);
+    if (props.currentDirectory !== undefined && status.state === "loaded") {
+      const entry = status.tree.entryMap.get(props.currentDirectory);
+      if (entry !== undefined) {
+        if (entry instanceof TreeDirectory) {
+          setStatus({ ...status, currentDirectory: entry as TreeDirectory, message: undefined });
+        } else {
+          setStatus({ ...status, message: `FilePanel ''${props.currentDirectory}' is a file in this tree`});
+        }
+      } else {
+        setStatus({ ...status, message: `'${props.currentDirectory}' is not part of this tree` });
       }
-    </div>
-    <div className="status">
-      <StatusBar status={status} />
+    }
+  }, [props.currentDirectory]);
+
+function changeDir(newDirectory: TreeDirectory) {
+  if (status.state === "loaded") {
+    setStatus({ ...status, currentDirectory: newDirectory });
+    props.onChangeCurrentDirectory(status.tree.relativePath(newDirectory.fullPath));
+  }
+}
+
+return <div className="file-panel box">
+  <Heading status={status} setStatus={setStatus} onDirectoryChanged={changeDir} />
+  <div className="main">
+    {status.state === "error" && <div className="notification is-danger">{status.errorMessage}</div>}
+    {status.state === "loaded" &&
+      <table className="table is-striped is-narrow is-fullwidth nowrap">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th align="center">Status</th>
+            <th align="right">Size</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {status.currentDirectory.directories.length !== 0 &&
+            <DirectoryList
+              tree={status.tree}
+              diff={props.diff}
+              directories={status.currentDirectory.directories}
+              options={props.options}
+              onDirectoryClick={newDirectory => changeDir(newDirectory)}
+            />
+          }
+          {status.currentDirectory.files.length !== 0 &&
+            <FileList
+              tree={status.tree}
+              diff={props.diff}
+              directoryPath={status.currentDirectory.fullPath}
+              files={status.currentDirectory.files}
+              options={props.options}
+            />}
+        </tbody>
+      </table>
+    }
+  </div>
+  <div className="status">
+    <div className="level is-mobile">
+      <div className="level-left">
+        <StatusBar status={status} />
+      </div>
     </div>
   </div>
+</div>
 }
 
 function DirectoryList(props: {
@@ -195,9 +228,8 @@ function FileItem(props: {
   options: FilterOptions
 }) {
   const relativePath = props.tree.relativePath(props.directoryPath + Path.sep() + props.file.name);
-  const [text, style] = props.diff === undefined
-    ? [undefined, undefined]
-    : props.diff.getState(relativePath, props.options.compareSize, props.options.compareTime);
+  const diffMap = props.diff?.diffMap.get(relativePath);
+  const [text, style] = diffMap === undefined ? [undefined, undefined] : diffMap;
   const status = (style !== undefined && <div className={`tag ${style}`}>{text}</div>) || "-";
 
   if (text !== undefined) {
@@ -218,7 +250,11 @@ function FileItem(props: {
   </tr>
 }
 
-function Heading(props: { status: State, setStatus: (newStatus: State) => void }) {
+function Heading(props: {
+  status: State,
+  setStatus: (newStatus: State) => void,
+  onDirectoryChanged: (newDirectory: TreeDirectory) => void
+}) {
   let heading: ReactElement;
   let buttons: ReactElement;
 
@@ -236,6 +272,9 @@ function Heading(props: { status: State, setStatus: (newStatus: State) => void }
       props.setStatus(Clear);
     } else {
       props.setStatus({ ...(props.status as LoadedState), currentDirectory: newDirectory });
+      if (props.status.state === "loaded") {
+        props.onDirectoryChanged(newDirectory);
+      }
     }
   }
 
@@ -288,7 +327,10 @@ function StatusBar(props: { status: State }) {
     case "loading":
       return <>Loading</>;
     case "loaded":
-      return <>{props.status.currentDirectory.directories.length} directories, {props.status.currentDirectory.files.length} files</>;
+      return <>
+      {props.status.currentDirectory.directories.length} directories, {props.status.currentDirectory.files.length} files
+      {props.status.message !== undefined && <p>{props.status.message}</p>}
+      </>;
     case "error":
       return <>Error: {props.status.errorMessage}</>
   }

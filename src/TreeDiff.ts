@@ -7,13 +7,13 @@ export type DiffType = "unchanged" | "changed" | "extra" | "???";
 export class TreeDiff {
   public diffMap = new Map<string, [DiffType, string]>();
 
-  constructor(protected left: FileTree, protected right: FileTree) {
-    this.diffMap = this.getAllDiffs();
+  constructor(protected left: FileTree, protected right: FileTree, compareSize: boolean, compareTime: boolean) {
+    this.diffMap = this.getAllDiffs(compareSize, compareTime);
   }
 
-  getState(path: string, compareSize: boolean, compareTime: boolean): [DiffType, string] {
-    const leftItem = this.left.entryMap.get(path);
-    const rightItem = this.right.entryMap.get(path);
+  protected getState(left: FileTree, right: FileTree, path: string, compareSize: boolean, compareTime: boolean): [DiffType, string] {
+    const leftItem = left.entryMap.get(path);
+    const rightItem = right.entryMap.get(path);
 
     // Item appears in left tree only
     if (leftItem !== undefined && rightItem === undefined)
@@ -68,7 +68,7 @@ export class TreeDiff {
     for (let file of directory.files) {
       const relativePath = tree.relativePath(directory.fullPath + Path.sep() + file.name);
       if (!diffs.has(relativePath)) {
-        const state = this.getState(relativePath, compareSize, compareTime);
+        const state = this.getState(tree, otherTree, relativePath, compareSize, compareTime);
         diffs.set(relativePath, state);
         switch (state[0]) {
           case "unchanged":
@@ -92,7 +92,7 @@ export class TreeDiff {
       if (!diffs.has(relativePath)) {
         const [unchanged, changed, extra] = this.processDir(diffs, dir, tree, otherTree, compareSize, compareTime);
         // Get the state of the directory first. It might be extra!
-        let state = this.getState(relativePath, false, false);
+        let state = this.getState(tree, otherTree, relativePath, false, false);
         // Amend the state it is was unchanged - i.e. the directory exists on both sides:
         if (state[0] === "unchanged")
           state = (changed + extra == 0)
@@ -114,12 +114,12 @@ export class TreeDiff {
    * Parse both the left and the right trees to produce a list of all
    * entries present in both with their associated status
    */
-  getAllDiffs() {
+  getAllDiffs(compareSize: boolean, compareTime: boolean) {
     // A list of entries
     const diffs = new Map<string, [DiffType, string]>();
 
-    this.processDir(diffs, this.left, this.left, this.right, false, false);
-    this.processDir(diffs, this.right, this.right, this.left, false, false);
+    this.processDir(diffs, this.left, this.left, this.right, compareSize, compareTime);
+    this.processDir(diffs, this.right, this.right, this.left, compareSize, compareTime);
 
     return diffs;
   }
