@@ -12,7 +12,7 @@ Names are now sorted using locale, which is case-insentitive?
 - [DONE] Enable cancel when loading
 - Some kind of output - a list of files? A script to reconcile both trees? A tree view of the differences?
 - Command line arguments, i.e. mobztree ``[[left-path] [right=path]] [-time] [-size] [-changed] [-unchanged] -extra``
-- Drag and drop for directories?
-- Add favicon
+- Drag and drop for directories? See webViewWindow.onDragDropEvent
+- [IN PROGRESS] Add favicon. Added so request doesn't fail anymore but icon only shows in web page, not window
 - [DONE] Give files and folders an icon
 - Multi-pick two folders?
