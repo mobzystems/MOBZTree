@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import "./App.css";
-import FilePanel from "./FilePanel";
+import FilePanel, { FilterOptions } from "./FilePanel";
 import { FileTree } from "./FileTree";
 import { TreeDiff } from "./TreeDiff";
 
@@ -11,7 +11,7 @@ export default function App() {
   const [compareSize, setCompareSize] = useState(false);
   const [compareTime, setCompareTime] = useState(false);
 
-  const [showDuplicate, setShowDuplicate] = useState(true);
+  const [showUnchanged, setShowUnchanged] = useState(true);
   const [showAdded, setShowAdded] = useState(true);
   const [showDeleted, setShowDeleted] = useState(true);
 
@@ -21,6 +21,14 @@ export default function App() {
     else
       return undefined;
   }, [leftTree, rightTree]);
+
+  const filterOptions: FilterOptions = {
+    showUnchanged: showUnchanged,
+    showDeleted: showDeleted,
+    showAdded: showAdded,
+    compareSize: compareSize,
+    compareTime: compareTime
+  }
 
   return <div className="app debug-NOT">
     <div className="header level is-mobile">
@@ -39,9 +47,9 @@ export default function App() {
         </div>
         <div className="level-item">
           <div className="buttons are-small has-addons">
-            <button className={`button is-white ${!showDuplicate ? "is-light" : ""}`} onClick={() => setShowDuplicate(!showDuplicate)} title="Show/Hide duplicate files">Duplicate</button>
-            <button className={`button is-danger ${!showDeleted ? "is-light" : ""}`} onClick={() => setShowDeleted(!showDeleted)} title="Show/Hide deleted files">Deleted</button>
-            <button className={`button is-success ${!showAdded ? "is-light" : ""}`} onClick={() => setShowAdded(!showAdded)} title="Show/Hide added files">Added</button>
+            <button className={`button is-light ${!showUnchanged ? "is-dark" : ""}`} onClick={() => setShowUnchanged(!showUnchanged)} title="Show/Hide unchanged files">Unchanged</button>
+            <button className={`button is-danger ${!showDeleted ? "is-dark" : ""}`} onClick={() => setShowDeleted(!showDeleted)} title="Show/Hide deleted files">Deleted</button>
+            <button className={`button is-success ${!showAdded ? "is-dark" : ""}`} onClick={() => setShowAdded(!showAdded)} title="Show/Hide added files">Added</button>
           </div>
         </div>
         <div className="level-item">
@@ -52,8 +60,8 @@ export default function App() {
       </div>
     </div>
     <div className="main">
-      <FilePanel path={undefined} onLoaded={setLeftTree} diff={diff} options={{ showDuplicate: showDuplicate, showDeleted: showDeleted, showAdded: showAdded, compareSize: compareSize, compareTime: compareTime }} />
-      <FilePanel path={undefined} onLoaded={setRightTree} diff={diff} options={{ showDuplicate: showDuplicate, showDeleted: showDeleted, showAdded: showAdded, compareSize: compareSize, compareTime: compareTime }} />
+      <FilePanel path={undefined} onLoaded={setLeftTree} diff={diff} options={filterOptions} />
+      <FilePanel path={undefined} onLoaded={setRightTree} diff={diff} options={filterOptions} />
     </div>
     <div className="status">
       <div className="buttons are-small">

@@ -35,11 +35,19 @@ type State = ClearState | LoadingState | LoadedState | ErrorState;
 const Clear: ClearState = { state: "clear" };
 const requestedPathState = (path: string): LoadingState => ({ state: "loading", requestedPath: path });
 
+export interface FilterOptions {
+  showUnchanged: boolean;
+  showDeleted: boolean;
+  showAdded: boolean;
+  compareSize: boolean;
+  compareTime: boolean
+}
+
 export default function FilePanel(props: {
   path: string | undefined,
   onLoaded: (tree: FileTree | undefined) => void,
   diff: TreeDiff | undefined,
-  options: { showDuplicate: boolean, showDeleted: boolean, showAdded: boolean, compareSize: boolean, compareTime: boolean }
+  options: FilterOptions
 }) {
   const [status, setStatus] = useState<State>(props.path === undefined ? Clear : requestedPathState(props.path));
 
@@ -83,17 +91,17 @@ export default function FilePanel(props: {
                 tree={status.tree}
                 diff={props.diff}
                 directories={status.currentDirectory.directories}
-                onDirectoryClick={newDirectory => setStatus({...status, currentDirectory: newDirectory})}
+                onDirectoryClick={newDirectory => setStatus({ ...status, currentDirectory: newDirectory })}
               />
             }
             {status.currentDirectory.files.length !== 0 &&
-              <FileList 
+              <FileList
                 tree={status.tree}
                 diff={props.diff}
                 directoryPath={status.currentDirectory.fullPath}
                 files={status.currentDirectory.files}
                 options={props.options}
-            />}
+              />}
           </tbody>
         </table>
       }
@@ -111,7 +119,7 @@ function DirectoryList(props: {
   onDirectoryClick: (newDirectory: TreeDirectory) => void
 }) {
   return <>{
-    props.directories.map(directory => 
+    props.directories.map(directory =>
       <DirectoryItem key={directory.name}
         tree={props.tree}
         diff={props.diff}
@@ -150,13 +158,13 @@ function FileList(props: {
   diff: TreeDiff | undefined,
   directoryPath: string,
   files: TreeFile[],
-  options: { showDuplicate: boolean, showDeleted: boolean, showAdded: boolean, compareSize: boolean, compareTime: boolean }
+  options: FilterOptions
 }) {
-  return props.files.map(file => 
+  return props.files.map(file =>
     <FileItem key={file.name}
       tree={props.tree}
-      diff={props.diff} 
-      directoryPath={props.directoryPath} 
+      diff={props.diff}
+      directoryPath={props.directoryPath}
       file={file}
       options={props.options}
     />
@@ -168,7 +176,7 @@ function FileItem(props: {
   diff: TreeDiff | undefined,
   directoryPath: string,
   file: TreeFile,
-  options: { showDuplicate: boolean, showDeleted: boolean, showAdded: boolean, compareSize: boolean, compareTime: boolean }
+  options: FilterOptions
 }) {
   const relativePath = props.tree.relativePath(props.directoryPath + Path.sep() + props.file.name);
   const [text, style] = props.diff === undefined
@@ -176,7 +184,7 @@ function FileItem(props: {
     : props.diff.getState(relativePath, props.options.compareSize, props.options.compareTime);
   const status = (style !== undefined && <div className={`tag ${style}`}>{text}</div>) || "-";
 
-  if (text === "duplicate" && props.options.showDuplicate === false)
+  if (text === "duplicate" && props.options.showUnchanged === false)
     return undefined;
   if (text === "deleted" && props.options.showDeleted == false)
     return undefined;
@@ -208,7 +216,7 @@ function Heading(props: { status: State, setStatus: (newStatus: State) => void }
     if (newDirectory === undefined) {
       props.setStatus(Clear);
     } else {
-      props.setStatus({...(props.status as LoadedState), currentDirectory: newDirectory});
+      props.setStatus({ ...(props.status as LoadedState), currentDirectory: newDirectory });
     }
   }
 
@@ -227,11 +235,11 @@ function Heading(props: { status: State, setStatus: (newStatus: State) => void }
         <button className="button is-info"
           disabled={props.status.currentDirectory.fullPath === props.status.tree.rootPath}
           onClick={() => setPath((props.status as LoadedState).tree)}
-          >H</button>
+        >H</button>
         <button className="button is-info"
           disabled={props.status.currentDirectory.parentDirectory === undefined}
           onClick={() => setPath((props.status as LoadedState).currentDirectory.parentDirectory)}
-          >..</button>
+        >..</button>
         <button className="button is-info" onClick={() => setPath(undefined)}>&times;</button>
       </>;
       break;
