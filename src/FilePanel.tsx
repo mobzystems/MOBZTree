@@ -291,6 +291,9 @@ function Heading(props: {
       heading = <h2 className="is-marginless">{props.status.currentDirectory.fullPath}</h2>;
       buttons = <>
         <button className="button is-info"
+          onClick={() => props.setStatus(requestedPathState((props.status as LoadedState).tree.rootPath))}
+        >R</button>
+        <button className="button is-info"
           disabled={props.status.currentDirectory.fullPath === props.status.tree.rootPath}
           onClick={() => setPath((props.status as LoadedState).tree)}
         >H</button>
