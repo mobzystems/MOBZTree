@@ -5,7 +5,7 @@ Names are now sorted using locale, which is case-insentitive?
 
 ## TODO
 
-- Introduce icons. The file and folder emoji are ot available on every platform
+- [DONE] Introduce icons. The file and folder emoji are ot available on every platform
 - [DONE] Introduce syncing current directories, i.e. keeping both relative current directories the same
 - Option to always show directories (for inspection and debugging)
 - [DONE] Refresh

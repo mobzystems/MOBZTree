@@ -3,6 +3,8 @@ import { open } from '@tauri-apps/plugin-dialog';
 import * as Path from '@tauri-apps/api/path';
 import { TreeDirectory, FileTree, TreeFile } from "./FileTree";
 import { TreeDiff } from "./TreeDiff";
+import { faSync as refreshIcon, faHome as homeIcon, faClose as closeIcon, faArrowUp as upIcon, faFolderOpen as openIcon } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 // function sleep(ms: number) {
 //   return new Promise(resolve => setTimeout(resolve, ms));
@@ -281,7 +283,9 @@ function Heading(props: {
   switch (props.status.state) {
     case "clear":
       heading = <>Please open a directory</>;
-      buttons = <button className={`button is-small is-primary`} onClick={() => openPath()}>Open</button>;
+      buttons = <button className={`button is-small is-primary`} onClick={() => openPath()}>
+        <span className="icon is-small"><FontAwesomeIcon icon={openIcon} /></span>
+      </button>;
       break;
     case "loading":
       heading = <>Loading</>;
@@ -290,23 +294,33 @@ function Heading(props: {
     case "loaded":
       heading = <h2 className="is-marginless">{props.status.currentDirectory.fullPath}</h2>;
       buttons = <>
-        <button className="button is-info"
+        <button className="button is-primary"
           onClick={() => props.setStatus(requestedPathState((props.status as LoadedState).tree.rootPath))}
-        >R</button>
+        >
+          <span className="icon is-small"><FontAwesomeIcon icon={refreshIcon} /></span>
+        </button>
         <button className="button is-info"
           disabled={props.status.currentDirectory.fullPath === props.status.tree.rootPath}
           onClick={() => setPath((props.status as LoadedState).tree)}
-        >H</button>
+        >
+          <span className="icon is-small"><FontAwesomeIcon icon={homeIcon} /></span>
+        </button>
         <button className="button is-info"
           disabled={props.status.currentDirectory.parentDirectory === undefined}
           onClick={() => setPath((props.status as LoadedState).currentDirectory.parentDirectory)}
-        >..</button>
-        <button className="button is-info" onClick={() => setPath(undefined)}>&times;</button>
+        >
+          <span className="icon is-small"><FontAwesomeIcon icon={upIcon} /></span>
+        </button>
+        <button className="button is-danger" onClick={() => setPath(undefined)}>
+          <span className="icon is-small"><FontAwesomeIcon icon={closeIcon} /></span>
+        </button>
       </>;
       break;
     case "error":
       heading = <span className="has-text-danger">{props.status.errorPath}</span>;
-      buttons = <button className={`button is-small is-primary`} onClick={() => openPath()}>Open</button>;
+      buttons = <button className={`button is-small is-primary`} onClick={() => openPath()}>
+        <span className="icon is-small"><FontAwesomeIcon icon={openIcon} /></span>
+      </button>;
   }
 
   return <div className="header">

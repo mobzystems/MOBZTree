@@ -81,7 +81,7 @@ body {
 } */
 
 .file-panel > div {
-  padding: 0.5rem;
+  padding: 0.5rem 0;
   /* border: 1px solid red; */
   /* margin: 0 !important; */
 }
