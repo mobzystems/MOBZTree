@@ -3,7 +3,15 @@ import { open } from '@tauri-apps/plugin-dialog';
 import * as Path from '@tauri-apps/api/path';
 import { TreeDirectory, FileTree, TreeFile } from "./FileTree";
 import { TreeDiff } from "./TreeDiff";
-import { faSync as refreshIcon, faHome as homeIcon, faClose as closeIcon, faArrowUp as upIcon, faFolderOpen as openIcon } from "@fortawesome/free-solid-svg-icons";
+import {
+  faSync as refreshIcon,
+  faHome as homeIcon,
+  faClose as closeIcon,
+  faArrowUp as upIcon,
+  faFolderOpen as openIcon,
+  faFolderBlank as directoryIcon,
+  faFileArchive as fileIcon
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 // function sleep(ms: number) {
@@ -87,7 +95,7 @@ export default function FilePanel(props: {
         if (entry instanceof TreeDirectory) {
           setStatus({ ...status, currentDirectory: entry as TreeDirectory, message: undefined });
         } else {
-          setStatus({ ...status, message: `FilePanel ''${props.currentDirectory}' is a file in this tree`});
+          setStatus({ ...status, message: `FilePanel ''${props.currentDirectory}' is a file in this tree` });
         }
       } else {
         setStatus({ ...status, message: `'${props.currentDirectory}' is not part of this tree` });
@@ -95,57 +103,57 @@ export default function FilePanel(props: {
     }
   }, [props.currentDirectory]);
 
-function changeDir(newDirectory: TreeDirectory) {
-  if (status.state === "loaded") {
-    setStatus({ ...status, currentDirectory: newDirectory });
-    props.onChangeCurrentDirectory(status.tree.relativePath(newDirectory.fullPath));
-  }
-}
-
-return <div className="file-panel box">
-  <Heading status={status} setStatus={setStatus} onDirectoryChanged={changeDir} />
-  <div className="main">
-    {status.state === "error" && <div className="notification is-danger">{status.errorMessage}</div>}
-    {status.state === "loaded" &&
-      <table className="table is-striped is-narrow is-fullwidth nowrap">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th align="center">Status</th>
-            <th align="right">Size</th>
-            <th>Time</th>
-          </tr>
-        </thead>
-        <tbody>
-          {status.currentDirectory.directories.length !== 0 &&
-            <DirectoryList
-              tree={status.tree}
-              diff={props.diff}
-              directories={status.currentDirectory.directories}
-              options={props.options}
-              onDirectoryClick={newDirectory => changeDir(newDirectory)}
-            />
-          }
-          {status.currentDirectory.files.length !== 0 &&
-            <FileList
-              tree={status.tree}
-              diff={props.diff}
-              directoryPath={status.currentDirectory.fullPath}
-              files={status.currentDirectory.files}
-              options={props.options}
-            />}
-        </tbody>
-      </table>
+  function changeDir(newDirectory: TreeDirectory) {
+    if (status.state === "loaded") {
+      setStatus({ ...status, currentDirectory: newDirectory });
+      props.onChangeCurrentDirectory(status.tree.relativePath(newDirectory.fullPath));
     }
-  </div>
-  <div className="status">
-    <div className="level is-mobile">
-      <div className="level-left">
-        <StatusBar status={status} />
+  }
+
+  return <div className="file-panel box">
+    <Heading status={status} setStatus={setStatus} onDirectoryChanged={changeDir} />
+    <div className="main">
+      {status.state === "error" && <div className="notification is-danger">{status.errorMessage}</div>}
+      {status.state === "loaded" &&
+        <table className="table is-striped is-narrow is-fullwidth nowrap">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th align="center">Status</th>
+              <th align="right">Size</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {status.currentDirectory.directories.length !== 0 &&
+              <DirectoryList
+                tree={status.tree}
+                diff={props.diff}
+                directories={status.currentDirectory.directories}
+                options={props.options}
+                onDirectoryClick={newDirectory => changeDir(newDirectory)}
+              />
+            }
+            {status.currentDirectory.files.length !== 0 &&
+              <FileList
+                tree={status.tree}
+                diff={props.diff}
+                directoryPath={status.currentDirectory.fullPath}
+                files={status.currentDirectory.files}
+                options={props.options}
+              />}
+          </tbody>
+        </table>
+      }
+    </div>
+    <div className="status">
+      <div className="level is-mobile">
+        <div className="level-left">
+          <StatusBar status={status} />
+        </div>
       </div>
     </div>
   </div>
-</div>
 }
 
 function DirectoryList(props: {
@@ -194,10 +202,18 @@ function DirectoryItem(props: {
   }
 
   return <tr>
-    <td><a href="#" onClick={(e) => {
-      e.preventDefault();
-      props.onClick()
-    }}>📁&nbsp;{props.directory.name}</a></td>
+    <td>
+      <a href="#" onClick={(e) => { e.preventDefault(); props.onClick() }}>
+        <span className="icon-text">
+          <span className="icon has-text-warning">
+            <FontAwesomeIcon icon={directoryIcon} />
+          </span>
+          <span>
+            {props.directory.name}
+          </span>
+        </span>
+      </a>
+    </td>
     <td align="center">{status}</td>
     <td></td>
     <td>{new Date(props.directory.modifiedTime * 1000).toLocaleString()}</td>
@@ -245,7 +261,16 @@ function FileItem(props: {
   }
 
   return <tr>
-    <td>📄&nbsp;{props.file.name}</td>
+    <td>
+      <span className="icon-text">
+        <span className="icon has-text-info">
+          <FontAwesomeIcon icon={fileIcon} />
+        </span>
+        <span>
+          {props.file.name}
+        </span>
+      </span>
+    </td>
     <td align="center">{status}</td>
     <td align="right">{props.file.size}</td>
     <td>{new Date(props.file.modifiedTime * 1000).toLocaleString()}</td>
@@ -345,8 +370,8 @@ function StatusBar(props: { status: State }) {
       return <>Loading</>;
     case "loaded":
       return <>
-      {props.status.currentDirectory.directories.length} directories, {props.status.currentDirectory.files.length} files
-      {props.status.message !== undefined && <p>{props.status.message}</p>}
+        {props.status.currentDirectory.directories.length} directories, {props.status.currentDirectory.files.length} files
+        {props.status.message !== undefined && <p>{props.status.message}</p>}
       </>;
     case "error":
       return <>Error: {props.status.errorMessage}</>
