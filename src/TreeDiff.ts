@@ -2,7 +2,7 @@ import { FileTree, TreeDirectory } from "./FileTree";
 import * as Path from '@tauri-apps/api/path';
 
 // The result of a comparison of two items cen be one of these
-export type DiffType = "unchanged" | "changed" | "deleted" | "added" | "???";
+export type DiffType = "unchanged" | "changed" | "extra" | "???";
 
 export class TreeDiff {
   public diffMap = new Map<string, [DiffType, string]>();
@@ -17,11 +17,11 @@ export class TreeDiff {
 
     // Item appears in left tree only
     if (leftItem !== undefined && rightItem === undefined)
-      return ["deleted", "is-danger"];
+      return ["extra", "is-success"];
 
     // Right tree only
     else if (leftItem === undefined && rightItem !== undefined)
-      return ["added", "is-success"];
+      return ["extra", "is-success"];
 
     // Both items are undefined - that's an error
     else if (leftItem === undefined && rightItem === undefined)
@@ -49,7 +49,7 @@ export class TreeDiff {
         return ["unchanged", "is-light"];
       } else
         // One file, one directory
-        return ["added", "is-success"];
+        return ["extra", "is-success"];
       // else if (leftItem.modifiedTime < rightItem.modifiedTime)
       //   return ["older", "is-light"];
       // else
@@ -63,8 +63,7 @@ export class TreeDiff {
     // First loop over all our own files, counting states
     let unchangedCount = 0;
     let changedCount = 0;
-    let addedCount = 0;
-    let deletedCount = 0;
+    let extraCount = 0;
 
     for (let file of directory.files) {
       const relativePath = tree.relativePath(directory.fullPath + Path.sep() + file.name);
@@ -72,17 +71,14 @@ export class TreeDiff {
         const state = this.getState(relativePath, compareSize, compareTime);
         diffs.set(relativePath, state);
         switch (state[0]) {
-          case "added":
-            addedCount++;
-            break;
-          case "deleted":
-            deletedCount++;
+          case "unchanged":
+            unchangedCount++;
             break;
           case "changed":
             changedCount++;
             break;
-          case "unchanged":
-            unchangedCount++;
+          case "extra":
+            extraCount++;
             break;
           case "???":
             break;
@@ -94,25 +90,24 @@ export class TreeDiff {
     for (let dir of directory.directories) {
       const relativePath = tree.relativePath(dir.fullPath);
       if (!diffs.has(relativePath)) {
-        const [added, deleted, changed, unchanged] = this.processDir(diffs, dir, tree, otherTree, compareSize, compareTime);
-        // Get the state of the directory fist. Itmight be addded of deleted!
+        const [unchanged, changed, extra] = this.processDir(diffs, dir, tree, otherTree, compareSize, compareTime);
+        // Get the state of the directory first. It might be extra!
         let state = this.getState(relativePath, false, false);
         // Amend the state it is was unchanged - i.e. the directory exists on both sides:
         if (state[0] === "unchanged")
-          state = (added + deleted + changed == 0)
+          state = (changed + extra == 0)
             ? ["unchanged", "is-light"]
             : ["changed", "is-warning"];
 
         // Register this directory
         diffs.set(relativePath, state);
 
-        addedCount += added;
-        deletedCount += deleted;
+        extraCount += extra;
         changedCount += changed;
         unchangedCount += unchanged;
       }
     }
-    return [addedCount, deletedCount, changedCount, unchangedCount];
+    return [unchangedCount, changedCount, extraCount];
   }
 
   /**

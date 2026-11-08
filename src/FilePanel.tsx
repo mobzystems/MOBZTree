@@ -37,8 +37,8 @@ const requestedPathState = (path: string): LoadingState => ({ state: "loading", 
 
 export interface FilterOptions {
   showUnchanged: boolean;
-  showDeleted: boolean;
-  showAdded: boolean;
+  showChanged: boolean;
+  showExtra: boolean;
   compareSize: boolean;
   compareTime: boolean
 }
@@ -152,9 +152,9 @@ function DirectoryItem(props: {
   if (text !== undefined) {
     if (text === "unchanged" && props.options.showUnchanged === false)
       return undefined;
-    if (text === "deleted" && props.options.showDeleted == false)
+    if (text === "changed" && props.options.showChanged == false)
       return undefined;
-    if (text === "added" && props.options.showAdded == false)
+    if (text === "extra" && props.options.showExtra == false)
       return undefined;
   }
 
@@ -204,9 +204,9 @@ function FileItem(props: {
     // Suppress showing files that were filtered out
     if (text === "unchanged" && props.options.showUnchanged === false)
       return undefined;
-    if (text === "deleted" && props.options.showDeleted == false)
+    if (text === "changed" && props.options.showChanged == false)
       return undefined;
-    if (text === "added" && props.options.showAdded == false)
+    if (text === "extra" && props.options.showExtra == false)
       return undefined;
   }
 

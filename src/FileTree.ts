@@ -61,7 +61,7 @@ export class TreeDirectory extends DiskItem {
     const files = entries.filter(file => !file.is_directory);
     const directories = entries?.filter(file => file.is_directory);
 
-    this.files = files.map(file => new TreeFile(file.name, file.size, file.time_modified));
+    this.files = files.map(file => new TreeFile(file.name, file.size, file.time_modified)).sort((f1, f2) => f1.name.localeCompare(f2.name));
     this.directories = [];
     for (const dir of directories) {
       const directory = new TreeDirectory(this, dir.name, dir.time_modified);
@@ -73,6 +73,7 @@ export class TreeDirectory extends DiskItem {
         console.error(`Skipping directory ${directory.name} because ${e.toString()}`)
       }
     }
+    this.directories.sort((d1, d2) => d1.name.localeCompare(d2.name));
   }
 }
 

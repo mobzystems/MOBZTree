@@ -12,8 +12,8 @@ export default function App() {
   const [compareTime, setCompareTime] = useState(false);
 
   const [showUnchanged, setShowUnchanged] = useState(true);
-  const [showAdded, setShowAdded] = useState(true);
-  const [showDeleted, setShowDeleted] = useState(true);
+  const [showChanged, setShowChanged] = useState(true);
+  const [showExtra, setShowExtra] = useState(true);
 
   const diff = useMemo(() => {
     if (leftTree !== undefined && rightTree !== undefined)
@@ -24,8 +24,8 @@ export default function App() {
 
   const filterOptions: FilterOptions = {
     showUnchanged: showUnchanged,
-    showDeleted: showDeleted,
-    showAdded: showAdded,
+    showChanged: showChanged,
+    showExtra: showExtra,
     compareSize: compareSize,
     compareTime: compareTime
   }
@@ -47,16 +47,16 @@ export default function App() {
         </div>
         <div className="level-item">
           <div className="buttons are-small has-addons">
-            <button className={`button is-light ${!showUnchanged ? "is-dark" : ""}`} onClick={() => setShowUnchanged(!showUnchanged)} title="Show/Hide unchanged files">Unchanged</button>
-            <button className={`button is-danger ${!showDeleted ? "is-dark" : ""}`} onClick={() => setShowDeleted(!showDeleted)} title="Show/Hide deleted files">Deleted</button>
-            <button className={`button is-success ${!showAdded ? "is-dark" : ""}`} onClick={() => setShowAdded(!showAdded)} title="Show/Hide added files">Added</button>
+            <button className={`button ${!showUnchanged ? "is-light" : "is-dark"}`} onClick={() => setShowUnchanged(!showUnchanged)} title="Show/Hide unchanged files">Unchanged</button>
+            <button className={`button is-warning ${!showChanged ? "is-light" : ""}`} onClick={() => setShowChanged(!showChanged)} title="Show/Hide changed files">Changed</button>
+            <button className={`button is-success ${!showExtra ? "is-light" : ""}`} onClick={() => setShowExtra(!showExtra)} title="Show/Hide extra files">Extra</button>
           </div>
         </div>
-        <div className="level-item">
+        {/* <div className="level-item">
           <div className="buttons are-small">
             <button className="button is-primary" onClick={() => alert(`${leftTree?.rootPath} / ${rightTree?.rootPath}`)}>Compare</button>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
     <div className="main">
