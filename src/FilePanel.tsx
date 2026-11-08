@@ -25,6 +25,7 @@ type ClearState = {
 type LoadingState = {
   state: "loading";
   requestedPath: string;
+  cancel: boolean;
 };
 
 type LoadedState = {
@@ -44,7 +45,7 @@ type ErrorState = {
 type State = ClearState | LoadingState | LoadedState | ErrorState;
 
 const Clear: ClearState = { state: "clear" };
-const requestedPathState = (path: string): LoadingState => ({ state: "loading", requestedPath: path });
+const requestedPathState = (path: string): LoadingState => ({ state: "loading", requestedPath: path, cancel: false });
 
 export interface FilterOptions {
   showUnchanged: boolean;
@@ -77,7 +78,7 @@ export default function FilePanel(props: {
         setlastPath(status.requestedPath);
 
         try {
-          const tree = await FileTree.load(status.requestedPath);
+          const tree = await FileTree.load(status.requestedPath, () => status.cancel);
           setStatus({ state: "loaded", path: status.requestedPath, tree: tree, currentDirectory: tree, message: undefined })
           props.onLoaded(tree);
         }
@@ -314,13 +315,20 @@ function Heading(props: {
   switch (props.status.state) {
     case "clear":
       heading = <>Please open a directory</>;
-      buttons = <button className={`button is-small is-primary`} onClick={() => openPath()}>
+      buttons = <button className={`button is-small is-primary`}
+        onClick={() => openPath()}
+      >
         <span className="icon is-small"><FontAwesomeIcon icon={openIcon} /></span>
       </button>;
       break;
     case "loading":
       heading = <>Loading</>;
-      buttons = <button className="button is-warning">Cancel</button>
+      buttons = <button className="button is-warning"
+        disabled={props.status.cancel}
+        onClick={() => props.setStatus({...(props.status as LoadingState), cancel: true})}
+      >
+        {props.status.cancel ? "Cancelled" : "Cancel"}
+      </button>
       break;
     case "loaded":
       heading = <h2 className="is-marginless">{props.status.currentDirectory.fullPath}</h2>;

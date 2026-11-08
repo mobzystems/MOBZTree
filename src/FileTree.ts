@@ -41,7 +41,7 @@ export class TreeDirectory extends DiskItem {
   }
 
   // Populate a tree by filling its files and directories
-  async loadTree(): Promise<void> {
+  async loadTree(mustCancel: () => boolean): Promise<void> {
     // If we have a parent, append our name to theirs, otherwise use our own path
     this.fullPath = this.parentDirectory !== undefined
       ? await Path.join(this.parentDirectory.fullPath, this.name)
@@ -63,10 +63,15 @@ export class TreeDirectory extends DiskItem {
 
     this.files = files.map(file => new TreeFile(file.name, file.size, file.time_modified)).sort((f1, f2) => f1.name.localeCompare(f2.name, 'en-US'));
     this.directories = [];
+
     for (const dir of directories) {
+
+      if (mustCancel())
+        throw new Error("Loading was cancelled");
+
       const directory = new TreeDirectory(this, dir.name, dir.time_modified);
       try {
-        await directory.loadTree();
+        await directory.loadTree(mustCancel);
         this.directories.push(directory);
       }
       catch (e: any) {
@@ -94,10 +99,10 @@ export class FileTree extends TreeDirectory {
     return path.substring(this.rootPath.length + 1);
   }
 
-  static async load(path: string): Promise<FileTree> {
+  static async load(path: string, mustCancel: () => boolean): Promise<FileTree> {
     const tree = new FileTree(path);
     // This may raise an error!
-    await tree.loadTree();
+    await tree.loadTree(mustCancel);
     // Patch the name of the topmost directory item
     tree.name = await Path.basename(path);
     

@@ -9,10 +9,10 @@ Names are now sorted using locale, which is case-insentitive?
 - [DONE] Introduce syncing current directories, i.e. keeping both relative current directories the same
 - Option to always show directories (for inspection and debugging)
 - [DONE] Refresh
-- Enable cancel when loading
+- [DONE] Enable cancel when loading
 - Some kind of output - a list of files? A script to reconcile both trees? A tree view of the differences?
-- Command line arguments, i.e. mobztree ```[[left-path] [right=path]] [-time] [-size] [-changed] [-unchanged] -extra``
+- Command line arguments, i.e. mobztree ``[[left-path] [right=path]] [-time] [-size] [-changed] [-unchanged] -extra``
 - Drag and drop for directories?
 - Add favicon
-- Give files and folders an icon
+- [DONE] Give files and folders an icon
 - Multi-pick two folders?
