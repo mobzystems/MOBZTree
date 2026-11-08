@@ -1,3 +1,12 @@
 # MOBZTree (working title)
 
-First version with layout and directory reading
+First version with layout and directory reading. Comarison now work for both files and directories.
+Names are now sorted using locale, which is case-insentitive?
+
+## TODO
+
+- Introduce icons. The file and folder emoji are ot available on every platform
+- Introduce syncing current directories, i.e. keeping both relative current directories the same
+- Option to always show directories (for inspection and debugging)
+- Refresh
+- Some kind of output - a list of files? A script to reconcile both trees? A tree view of the differences?
