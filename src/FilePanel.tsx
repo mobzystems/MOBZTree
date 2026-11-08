@@ -91,6 +91,7 @@ export default function FilePanel(props: {
                 tree={status.tree}
                 diff={props.diff}
                 directories={status.currentDirectory.directories}
+                options={props.options}
                 onDirectoryClick={newDirectory => setStatus({ ...status, currentDirectory: newDirectory })}
               />
             }
@@ -116,7 +117,8 @@ function DirectoryList(props: {
   tree: FileTree,
   diff: TreeDiff | undefined,
   directories: TreeDirectory[],
-  onDirectoryClick: (newDirectory: TreeDirectory) => void
+  onDirectoryClick: (newDirectory: TreeDirectory) => void,
+  options: FilterOptions
 }) {
   return <>{
     props.directories.map(directory =>
@@ -124,6 +126,7 @@ function DirectoryList(props: {
         tree={props.tree}
         diff={props.diff}
         directory={directory}
+        options={props.options}
         onClick={() => props.onDirectoryClick(directory)}
       />
     )
@@ -134,13 +137,26 @@ function DirectoryItem(props: {
   tree: FileTree,
   diff: TreeDiff | undefined,
   directory: TreeDirectory,
-  onClick: () => void
+  onClick: () => void,
+  options: FilterOptions
 }) {
   const relativePath = props.tree.relativePath(props.directory.fullPath);
-  const diffState = props.diff === undefined
-    ? undefined
-    : props.diff.getState(relativePath, false, false);
+  // const diffState = props.diff === undefined
+  //   ? undefined
+  //   : props.diff.getState(relativePath, false, false);
+  const diffState = props.diff?.diffMap.get(relativePath);
   const status = (diffState && <div className={`tag ${diffState[1]}`}>{diffState[0]}</div>) || "-";
+
+  const [text, _style] = diffState === undefined ? [undefined, undefined] : diffState;
+
+  if (text !== undefined) {
+    if (text === "unchanged" && props.options.showUnchanged === false)
+      return undefined;
+    if (text === "deleted" && props.options.showDeleted == false)
+      return undefined;
+    if (text === "added" && props.options.showAdded == false)
+      return undefined;
+  }
 
   return <tr>
     <td><a href="#" onClick={(e) => {
@@ -184,13 +200,15 @@ function FileItem(props: {
     : props.diff.getState(relativePath, props.options.compareSize, props.options.compareTime);
   const status = (style !== undefined && <div className={`tag ${style}`}>{text}</div>) || "-";
 
-  // Suppress showing files that were filtered out
-  if (text === "unchanged" && props.options.showUnchanged === false)
-    return undefined;
-  if (text === "deleted" && props.options.showDeleted == false)
-    return undefined;
-  if (text === "added" && props.options.showAdded == false)
-    return undefined;
+  if (text !== undefined) {
+    // Suppress showing files that were filtered out
+    if (text === "unchanged" && props.options.showUnchanged === false)
+      return undefined;
+    if (text === "deleted" && props.options.showDeleted == false)
+      return undefined;
+    if (text === "added" && props.options.showAdded == false)
+      return undefined;
+  }
 
   return <tr>
     <td>📄&nbsp;{props.file.name}</td>

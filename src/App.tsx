@@ -20,7 +20,7 @@ export default function App() {
       return new TreeDiff(leftTree, rightTree);
     else
       return undefined;
-  }, [leftTree, rightTree]);
+  }, [leftTree, rightTree, compareSize, compareTime]);
 
   const filterOptions: FilterOptions = {
     showUnchanged: showUnchanged,
