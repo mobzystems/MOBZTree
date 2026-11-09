@@ -3,10 +3,11 @@ import "./App.css";
 import FilePanel, { FilterOptions } from "./FilePanel";
 import { FileTree } from "./FileTree";
 import { TreeDiff } from "./TreeDiff";
-import { faSun as darkThemeIcon, faMoon as lightThemeIcon } from "@fortawesome/free-regular-svg-icons";
+import { faSun as darkThemeIcon, faMoon as lightThemeIcon, faClock as timeIcon } from "@fortawesome/free-regular-svg-icons";
+import { faRuler as sizeIcon } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { getCurrentWindow, Theme } from '@tauri-apps/api/window';
-
+import { VisibleIcon } from "./CheckBoxIcon";
 
 export default function App() {
   const [leftTree, setLeftTree] = useState<FileTree>();
@@ -100,15 +101,34 @@ export default function App() {
         </div>
         <div className="level-item">
           <div className="buttons are-small has-addons">
-            <button className={`button is-info ${!compareSize ? "is-light" : ""}`} onClick={() => setCompareSize(!compareSize)} title="Compare files by size">Size</button>
-            <button className={`button is-info ${!compareTime ? "is-light" : ""}`} onClick={() => setCompareTime(!compareTime)} title="Compare files by time">Time</button>
+            <button className={`button is-info ${!compareSize ? "is-light" : ""}`} onClick={() => setCompareSize(!compareSize)} title="Compare files by size">
+              <span className="icon">
+                <FontAwesomeIcon icon={sizeIcon} />
+              </span>
+              <span>Size</span>
+            </button>
+            <button className={`button is-info ${!compareTime ? "is-light" : ""}`} onClick={() => setCompareTime(!compareTime)} title="Compare files by time">
+              <span className="icon">
+                <FontAwesomeIcon icon={timeIcon} />
+              </span>
+              <span>Time</span>
+            </button>
           </div>
         </div>
         <div className="level-item">
           <div className="buttons are-small has-addons">
-            <button className={`button ${!showUnchanged ? "is-light" : "is-dark"}`} onClick={() => setShowUnchanged(!showUnchanged)} title="Show/Hide unchanged files">Unchanged</button>
-            <button className={`button is-warning ${!showChanged ? "is-light" : ""}`} onClick={() => setShowChanged(!showChanged)} title="Show/Hide changed files">Changed</button>
-            <button className={`button is-success ${!showExtra ? "is-light" : ""}`} onClick={() => setShowExtra(!showExtra)} title="Show/Hide extra files">Extra</button>
+            <button className={`button ${!showUnchanged ? "is-light" : "is-dark"}`} onClick={() => setShowUnchanged(!showUnchanged)} title="Show/Hide unchanged files">
+              <VisibleIcon state={showUnchanged} />
+              <span>Unchanged</span>
+            </button>
+            <button className={`button is-warning ${!showChanged ? "is-light" : ""}`} onClick={() => setShowChanged(!showChanged)} title="Show/Hide changed files">
+              <VisibleIcon state={showChanged} />
+              <span>Changed</span>
+            </button>
+            <button className={`button is-success ${!showExtra ? "is-light" : ""}`} onClick={() => setShowExtra(!showExtra)} title="Show/Hide extra files">
+              <VisibleIcon state={showExtra} />
+              <span>Extra</span>
+            </button>
           </div>
         </div>
         {/* <div className="level-item">

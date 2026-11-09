@@ -8,11 +8,14 @@ import {
   faHome as homeIcon,
   faClose as closeIcon,
   faArrowUp as upIcon,
-  faFolderOpen as openIcon,
   faFolderBlank as directoryIcon,
   faFileArchive as fileIcon
 } from "@fortawesome/free-solid-svg-icons";
+import { faFolderOpen as openIcon} from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
+// The minimum time between state updates when loading directoy trees
+const MIN_TIME_BETWEEN_UPDATES = 500;
 
 // function sleep(ms: number) {
 //   return new Promise(resolve => setTimeout(resolve, ms));
@@ -78,9 +81,17 @@ export default function FilePanel(props: {
 
         setlastPath(status.requestedPath);
 
+        let time = new Date().valueOf();
+
         try {
           const tree = await FileTree.load(status.requestedPath, (path: string) => {
-            setLoadingPath(() => path);
+            // console.info(`Loading '${path}'`);
+            // Only update the loading path every ... ms
+            const newTime = new Date().valueOf();
+            if (newTime - time > MIN_TIME_BETWEEN_UPDATES) {
+              setLoadingPath(() => path);
+              time = newTime;
+            }
             return status.cancel;
           });
           if (status.cancel)
@@ -352,7 +363,10 @@ function Heading(props: {
       break;
     case "loaded":
       // heading = <h2 className="is-marginless">{props.status.currentDirectory.fullPath}</h2>;
-      heading = <h2 className="is-marginless is-size-5" title={props.status.tree.rootPath}>{props.status.tree.name}</h2>;
+      heading = <>
+        <h2 className="title is-marginless is-size-5" title={props.status.tree.rootPath}>{props.status.tree.name}</h2>
+        {/* <p className="help subtitle">{props.status.tree.rootPath}</p> */}
+      </>;
       buttons = <>
         <button className="button is-primary"
           title="Refresh the current directory tree"
@@ -408,8 +422,8 @@ function StatusBar(props: { status: State, loadingPath: string | undefined }) {
     case "clear":
       return <>No directory selected</>;
     case "loading":
-      console.info(`Rendering status bar with ${props.loadingPath}`);
-      return <span className="is-italic">Loading {props.loadingPath}...</span>;
+      // console.info(`Rendering status bar with ${props.loadingPath}`);
+      return <span className="is-italic">Loading {props.loadingPath ?? props.status.requestedPath}...</span>;
     case "loaded":
       return <>
         <div className="level-item">

@@ -40,13 +40,13 @@ export class TreeDiff {
           (!compareTime || leftItem.modifiedTime === rightItem.modifiedTime) &&
           (!compareSize || leftItem.size === rightItem.size)
         )
-          return ["unchanged", "is-light"];
+          return ["unchanged", "is-white"];
         else
           return ["changed", "is-warning"];
       } else if (!leftIsFile && !rightIsFile) {
         // Handle directories. In this phase, we just return "unchanged"
         // because the directory is present in both trees
-        return ["unchanged", "is-light"];
+        return ["unchanged", "is-white"];
       } else
         // One file, one directory
         return ["extra", "is-success"];
@@ -96,7 +96,7 @@ export class TreeDiff {
         // Amend the state it is was unchanged - i.e. the directory exists on both sides:
         if (state[0] === "unchanged")
           state = (changed + extra == 0)
-            ? ["unchanged", "is-light"]
+            ? ["unchanged", "is-white"]
             : ["changed", "is-warning"];
 
         // Register this directory

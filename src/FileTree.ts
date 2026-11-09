@@ -42,13 +42,13 @@ export class TreeDirectory extends DiskItem {
 
   // Populate a tree by filling its files and directories
   async loadTree(mustCancel: (path: string) => boolean): Promise<void> {
-    if (mustCancel(this.fullPath))
-      return; // throw new Error("Loading was cancelled");
-
     // If we have a parent, append our name to theirs, otherwise use our own path
     this.fullPath = this.parentDirectory !== undefined
       ? await Path.join(this.parentDirectory.fullPath, this.name)
       : this.name;
+
+    if (mustCancel(this.fullPath))
+      return; // throw new Error("Loading was cancelled");
 
     // console.info(`Loading ${this.fullPath}`);
 
@@ -68,8 +68,8 @@ export class TreeDirectory extends DiskItem {
     this.directories = [];
 
     for (const dir of directories) {
-      if (mustCancel(this.fullPath))
-        return; // throw new Error("Loading was cancelled");
+      // if (mustCancel(dir.name))
+      //   return; // throw new Error("Loading was cancelled");
 
       const directory = new TreeDirectory(this, dir.name, dir.time_modified);
       try {
