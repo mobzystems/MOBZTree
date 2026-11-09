@@ -54,7 +54,7 @@ html[data-theme=dark] {
   background-color: transparent;
 } */
 
-.file-panel {
+.app .file-panel {
   height: 100%;
   display: grid;
   grid-template-rows: auto 1fr auto;
@@ -71,7 +71,7 @@ html[data-theme=dark] {
 }
 
 .file-panel > .main {
-  overflow: scroll;
+  overflow: auto;
 }
 
 .file-panel .main table {
