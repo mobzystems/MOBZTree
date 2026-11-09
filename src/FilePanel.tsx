@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useMemo, useState } from "react";
+import { ReactElement, useEffect, useState } from "react";
 import { open } from '@tauri-apps/plugin-dialog';
 import * as Path from '@tauri-apps/api/path';
 import { TreeDirectory, FileTree, TreeFile } from "./FileTree";
@@ -67,6 +67,7 @@ export default function FilePanel(props: {
   const [status, setStatus] = useState<State>(props.path === undefined ? Clear : requestedPathState(props.path));
 
   const [lastPath, setlastPath] = useState<string | undefined>(props.path);
+  const [loadingPath, setLoadingPath] = useState<string>();
 
   // console.info(`Rendering FilePanel '${props.name}' with current directory is '${props.currentDirectory}'`);
 
@@ -78,13 +79,19 @@ export default function FilePanel(props: {
         setlastPath(status.requestedPath);
 
         try {
-          const tree = await FileTree.load(status.requestedPath, () => status.cancel);
+          const tree = await FileTree.load(status.requestedPath, (path: string) => {
+            setLoadingPath(() => path);
+            return status.cancel;
+          });
+          if (status.cancel)
+            throw new Error("Loading was cancelled");
+
           setStatus({ state: "loaded", path: status.requestedPath, tree: tree, currentDirectory: tree, message: undefined })
           props.onLoaded(tree);
         }
         catch (e: any) {
           // Handle error case
-          setStatus({ state: "error", errorPath: status.requestedPath, errorMessage: e.toString() })
+          setStatus({ state: "error", errorPath: status.requestedPath, errorMessage: ("message" in e ? e.message : e.toString()) })
         }
       } else if (status.state === "clear") {
         props.onLoaded(undefined);
@@ -154,7 +161,7 @@ export default function FilePanel(props: {
     <div className="status">
       <div className="level is-mobile">
         <div className="level-left">
-          <StatusBar status={status} />
+          <StatusBar status={status} loadingPath={loadingPath} />
         </div>
       </div>
     </div>
@@ -338,7 +345,7 @@ function Heading(props: {
       heading = <span className="is-italic">Loading. Press Cancel to interrupt.</span>;
       buttons = <button className="button is-warning"
         disabled={props.status.cancel}
-        onClick={() => props.setStatus({ ...(props.status as LoadingState), cancel: true })}
+        onClick={() => (props.status as LoadingState).cancel = true /* props.setStatus({ ...(props.status as LoadingState), cancel: true })*/}
       >
         {props.status.cancel ? "Cancelled" : "Cancel"}
       </button>
@@ -396,12 +403,13 @@ function Heading(props: {
   </div>
 }
 
-function StatusBar(props: { status: State }) {
+function StatusBar(props: { status: State, loadingPath: string | undefined }) {
   switch (props.status.state) {
     case "clear":
       return <>No directory selected</>;
     case "loading":
-      return <span className="is-italic">Loading {props.status.requestedPath}...</span>;
+      console.info(`Rendering status bar with ${props.loadingPath}`);
+      return <span className="is-italic">Loading {props.loadingPath}...</span>;
     case "loaded":
       return <>
         <div className="level-item">
@@ -418,6 +426,6 @@ function StatusBar(props: { status: State }) {
         </div>
       </>;
     case "error":
-      return <>Error: {props.status.errorMessage}</>
+      return <span className="has-text-danger">Error: {props.status.errorMessage}</span>
   }
 }
