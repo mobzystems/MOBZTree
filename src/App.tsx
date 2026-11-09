@@ -74,12 +74,13 @@ export default function App() {
       <FilePanel name="Left" path={undefined} onLoaded={setLeftTree} diff={diff} options={filterOptions} currentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
       <FilePanel name="Right" path={undefined} onLoaded={setRightTree} diff={diff} options={filterOptions} currentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
     </div>
-    <div className="status">
+    {/* <div className="status">
       <div className="buttons are-small">
-        {/* <button className="button is-warning">Button 1</button>
-        <button className="button is-danger">Button 2</button> */}
+        <button className="button is-warning">Button 1</button>
+        <button className="button is-danger">Button 2</button>
       </div>
-    </div>
+      MOBZTree v0.7.0 by <a target="_blank">MOBZystems, Home of Tools</a>
+    </div> */}
   </div>
 }
 

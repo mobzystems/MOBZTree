@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useState } from "react";
+import { ReactElement, useEffect, useMemo, useState } from "react";
 import { open } from '@tauri-apps/plugin-dialog';
 import * as Path from '@tauri-apps/api/path';
 import { TreeDirectory, FileTree, TreeFile } from "./FileTree";
@@ -68,7 +68,7 @@ export default function FilePanel(props: {
 
   const [lastPath, setlastPath] = useState<string | undefined>(props.path);
 
-  console.info(`Rendering FilePanel '${props.name}' with current directory is '${props.currentDirectory}'`);
+  // console.info(`Rendering FilePanel '${props.name}' with current directory is '${props.currentDirectory}'`);
 
   useEffect(() => {
     (async function doit() {
@@ -93,7 +93,7 @@ export default function FilePanel(props: {
   }, [status]);
 
   useEffect(() => {
-    console.info(`FilePanel '${props.name}: current directory is now '${props.currentDirectory}'`);
+    // console.info(`FilePanel '${props.name}: current directory is now '${props.currentDirectory}'`);
     if (props.currentDirectory !== undefined && status.state === "loaded") {
       const entry = status.tree.entryMap.get(props.currentDirectory);
       if (entry !== undefined) {
@@ -288,6 +288,15 @@ function Heading(props: {
   onDirectoryChanged: (newDirectory: TreeDirectory) => void,
   lastPath: string | undefined
 }) {
+  // const [baseName, setBaseName] = useState<string>();
+
+  // useEffect(() => {
+  //   if (props.status.state === "loaded") {
+  //     Path.basename(props.status.tree.rootPath).
+  //       then(name => setBaseName(name));
+  //   }
+  // }, [props.status]);
+
   let heading: ReactElement;
   let buttons: ReactElement;
 
@@ -314,7 +323,11 @@ function Heading(props: {
 
   switch (props.status.state) {
     case "clear":
-      heading = <>Please open a directory</>;
+      heading = <div className="level-item">
+        <a href="#" 
+          onClick={e => { e.preventDefault(); openPath(); }}
+        >Open a directory</a>&nbsp;to get started
+        </div>;
       buttons = <button className={`button is-small is-primary`}
         onClick={() => openPath()}
       >
@@ -322,35 +335,42 @@ function Heading(props: {
       </button>;
       break;
     case "loading":
-      heading = <>Loading</>;
+      heading = <span className="is-italic">Loading. Press Cancel to interrupt.</span>;
       buttons = <button className="button is-warning"
         disabled={props.status.cancel}
-        onClick={() => props.setStatus({...(props.status as LoadingState), cancel: true})}
+        onClick={() => props.setStatus({ ...(props.status as LoadingState), cancel: true })}
       >
         {props.status.cancel ? "Cancelled" : "Cancel"}
       </button>
       break;
     case "loaded":
-      heading = <h2 className="is-marginless">{props.status.currentDirectory.fullPath}</h2>;
+      // heading = <h2 className="is-marginless">{props.status.currentDirectory.fullPath}</h2>;
+      heading = <h2 className="is-marginless is-size-5" title={props.status.tree.rootPath}>{props.status.tree.name}</h2>;
       buttons = <>
         <button className="button is-primary"
+          title="Refresh the current directory tree"
           onClick={() => props.setStatus(requestedPathState((props.status as LoadedState).tree.rootPath))}
         >
           <span className="icon is-small"><FontAwesomeIcon icon={refreshIcon} /></span>
         </button>
         <button className="button is-info"
+          title="Go to the top of the directory tree"
           disabled={props.status.currentDirectory.fullPath === props.status.tree.rootPath}
           onClick={() => setPath((props.status as LoadedState).tree)}
         >
           <span className="icon is-small"><FontAwesomeIcon icon={homeIcon} /></span>
         </button>
         <button className="button is-info"
+          title="Go one level up in directory tree"
           disabled={props.status.currentDirectory.parentDirectory === undefined}
           onClick={() => setPath((props.status as LoadedState).currentDirectory.parentDirectory)}
         >
           <span className="icon is-small"><FontAwesomeIcon icon={upIcon} /></span>
         </button>
-        <button className="button is-danger" onClick={() => setPath(undefined)}>
+        <button className="button is-danger"
+          title="Close the current directory tree"
+          onClick={() => setPath(undefined)}
+        >
           <span className="icon is-small"><FontAwesomeIcon icon={closeIcon} /></span>
         </button>
       </>;
@@ -381,11 +401,21 @@ function StatusBar(props: { status: State }) {
     case "clear":
       return <>No directory selected</>;
     case "loading":
-      return <>Loading</>;
+      return <span className="is-italic">Loading {props.status.requestedPath}...</span>;
     case "loaded":
       return <>
-        {props.status.currentDirectory.directories.length} directories, {props.status.currentDirectory.files.length} files
-        {props.status.message !== undefined && <p>{props.status.message}</p>}
+        <div className="level-item">
+          <div className="tags has-addons">
+            <span className="tag is-warning">Dirs: {props.status.currentDirectory.directories.length}</span>
+            <span className="tag is-info">Files: {props.status.currentDirectory.files.length}</span>
+          </div>
+        </div>
+        <div className="level-item">
+          {props.status.message !== undefined 
+          ? <span className="has-text-danger">{props.status.message}</span>
+          : `...${Path.sep()}${props.status.tree.relativePath(props.status.currentDirectory.fullPath)}`
+          }
+        </div>
       </>;
     case "error":
       return <>Error: {props.status.errorMessage}</>
