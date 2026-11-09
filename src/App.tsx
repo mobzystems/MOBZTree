@@ -1,8 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import FilePanel, { FilterOptions } from "./FilePanel";
 import { FileTree } from "./FileTree";
 import { TreeDiff } from "./TreeDiff";
+import { faSun as darkThemeIcon, faMoon as lightThemeIcon } from "@fortawesome/free-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { getCurrentWindow, Theme } from '@tauri-apps/api/window';
+
 
 export default function App() {
   const [leftTree, setLeftTree] = useState<FileTree>();
@@ -10,7 +14,9 @@ export default function App() {
 
   // const [lastPathLeft, setLastPathLeft] = useState<string>();
   // const [lastPathRight, setLastPathRight] = useState<string>();
-  
+
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
+
   const [compareSize, setCompareSize] = useState(false);
   const [compareTime, setCompareTime] = useState(false);
 
@@ -41,6 +47,37 @@ export default function App() {
     setCurrentDirectory(relativePath);
   }
 
+  useEffect(() => {
+    document.getElementsByTagName("html")[0].setAttribute("data-theme", isDarkTheme ? "dark" : "light");
+  }, [isDarkTheme]);
+
+  useEffect(() => {
+    function applyTheme(theme: Theme | null) {
+      if (theme !== null) {
+        if (theme === "dark")
+          setIsDarkTheme(true);
+        else
+          setIsDarkTheme(false);
+      }
+    }
+
+    (async function () {
+      const appWindow = getCurrentWindow();
+
+      // Get initial theme ('light' | 'dark' | null)
+      const theme = await appWindow.theme();
+      applyTheme(theme);
+
+      // Listen for system theme changes
+      const unlisten = await appWindow.onThemeChanged(({ payload: theme }) => {
+        // console.log(`Theme changed to: ${theme}`);
+        applyTheme(theme);
+      });
+
+      return unlisten;
+    })();
+  }, []);
+
   return <div className="app debug-NOT">
     <div className="header level is-mobile">
       <div className="level-left">
@@ -50,6 +87,17 @@ export default function App() {
         </div>
       </div>
       <div className="level-right">
+        <div className="level-item">
+          <div className="buttons are-small has-addons">
+            <button className={`button ${isDarkTheme ? "is-dark" : "is-light"}`}
+              onClick={() => setIsDarkTheme(!isDarkTheme)} title="Switch dark/light mode">
+              <span className="icon">
+                <FontAwesomeIcon icon={isDarkTheme ? darkThemeIcon : lightThemeIcon} />
+              </span>
+              <span>{isDarkTheme ? "Dark" : "Light"}</span>
+            </button>
+          </div>
+        </div>
         <div className="level-item">
           <div className="buttons are-small has-addons">
             <button className={`button is-info ${!compareSize ? "is-light" : ""}`} onClick={() => setCompareSize(!compareSize)} title="Compare files by size">Size</button>
