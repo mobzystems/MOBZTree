@@ -13,6 +13,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faFolderOpen as openIcon} from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { f } from "./NumberFormat"
 
 // The minimum time between state updates when loading directoy trees
 const MIN_TIME_BETWEEN_UPDATES = 500;
@@ -133,7 +134,7 @@ export default function FilePanel(props: {
     }
   }
 
-  return <div className="file-panel box">
+  return <div className="file-panel box-NOT">
     <Heading status={status} setStatus={setStatus} onDirectoryChanged={changeDir} lastPath={lastPath} />
     <div className="main">
       {status.state === "error" && <div className="notification is-danger">{status.errorMessage}</div>}
@@ -295,7 +296,7 @@ function FileItem(props: {
       </span>
     </td>
     <td align="center">{status}</td>
-    <td align="right">{props.file.size}</td>
+    <td align="right">{f(props.file.size)}</td>
     <td>{new Date(props.file.modifiedTime * 1000).toLocaleString()}</td>
   </tr>
 }
