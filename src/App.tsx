@@ -3,7 +3,7 @@ import "./App.css";
 import FilePanel, { FilterOptions } from "./FilePanel";
 import { FileTree } from "./FileTree";
 import { TreeDiff } from "./TreeDiff";
-import { faSun as darkThemeIcon, faMoon as lightThemeIcon, faClock as timeIcon } from "@fortawesome/free-regular-svg-icons";
+import { faMoon as darkThemeIcon, faSun as lightThemeIcon, faClock as timeIcon } from "@fortawesome/free-regular-svg-icons";
 import { faRuler as sizeIcon } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { getCurrentWindow, Theme } from '@tauri-apps/api/window';
