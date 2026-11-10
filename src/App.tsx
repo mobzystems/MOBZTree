@@ -128,8 +128,6 @@ export default function App() {
     })();
   }, []);
 
-  console.log(`version is ${version?.value()} update is ${updateVersion?.value()}`)
-
   return <div className="app debug-NOT">
     <div className="header level is-mobile">
       <div className="level-left">

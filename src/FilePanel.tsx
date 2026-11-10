@@ -81,7 +81,7 @@ export default function FilePanel(props: {
   useEffect(() => {
     console.info(`FilePanel '${props.name}': status changed to '${status.state}'`);
 
-    (async function() {
+    (async function () {
       if (status.state === "clear") {
         props.onLoaded(undefined);
       } else if (status.state === "loading") {
@@ -112,8 +112,8 @@ export default function FilePanel(props: {
           // Handle error case
           setStatus({ state: "error", errorPath: status.requestedPath, errorMessage: ("message" in e ? e.message : e.toString()) })
         }
-      } else if (status.state === "loaded") {
-        status.currentDirectory = status.tree;
+      // } else if (status.state === "loaded") {
+      //   status.currentDirectory = status.tree;
       }
     })();
   }, [status]);
@@ -382,7 +382,7 @@ function Heading(props: {
         <button className="button is-info"
           title="Go one level up in directory tree"
           disabled={props.status.currentDirectory.parentDirectory === undefined}
-          onClick={() => setPath((props.status as LoadedState).currentDirectory.parentDirectory)}
+          onClick={() => setPath((props.status as LoadedState).currentDirectory.parentDirectory ?? (props.status as LoadedState).tree)}
         >
           <span className="icon is-small"><FontAwesomeIcon icon={upIcon} /></span>
         </button>
