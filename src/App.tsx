@@ -7,6 +7,7 @@ import { faRuler as sizeIcon } from "@fortawesome/free-solid-svg-icons";
 import * as tauriApp from '@tauri-apps/api/app';
 import * as tauriWindow from '@tauri-apps/api/window';
 import * as tauriCli from '@tauri-apps/plugin-cli';
+import * as tauriOs from '@tauri-apps/plugin-os';
 
 import FilePanel, { FilterOptions } from "./FilePanel";
 import { FileTree } from "./FileTree";
@@ -16,10 +17,20 @@ import { VisibleIcon } from "./CheckBoxIcon";
 
 import { Version, getUpdateVersion } from "./update";
 
+interface Info {
+  arch: string;
+  family: tauriOs.Family;
+  locale: string | null;
+  platform: tauriOs.Platform; // Set at compile time
+  type: tauriOs.OsType;
+  version: string;
+}
+
 export default function App() {
   const [appName, setAppName] = useState<string>();
   const [version, setVersion] = useState<Version>();
   const [updateVersion, setUpdateVersion] = useState<Version>();
+  const [info, setInfo] = useState<Info>();
 
   const [leftTree, setLeftTree] = useState<FileTree>();
   const [initialLeftPath, setInitialLeftPath] = useState<string>();
@@ -117,8 +128,17 @@ export default function App() {
         }
       }
       catch (e: any) {
-        setHelpMessage(typeof(e) === "string" ? e : "message" in e ? e.message : e.toString());
+        setHelpMessage(typeof (e) === "string" ? e : "message" in e ? e.message : e.toString());
       }
+
+      setInfo({
+        arch: tauriOs.arch(),
+        family: tauriOs.family(),
+        locale: await tauriOs.locale(),
+        platform: tauriOs.platform(),
+        type: tauriOs.type(),
+        version: tauriOs.version()
+      });
 
       // Launch an update check, but don't await it!
       getUpdateVersion(appName).then(version => setUpdateVersion(version));
@@ -128,11 +148,15 @@ export default function App() {
     })();
   }, []);
 
+  let infoString = info === undefined 
+    ? ""
+    : ` on ${info.type}/${info.family} [${info.arch}] (${info.platform} v${info.version}) - ${info.locale}`;
+
   return <div className="app debug-NOT">
     <div className="header level is-mobile">
       <div className="level-left">
         <div className="level-item">
-          <h1 className="title" title={`${appName} version ${version?.asString()}`}>{appName}</h1>
+          <h1 className="title" title={`${appName} version ${version?.asString()}${infoString}`}>{appName}</h1>
         </div>
       </div>
       <div className="level-right">
