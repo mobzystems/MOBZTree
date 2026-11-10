@@ -1,6 +1,6 @@
-# MOBZTree (working title)
+# MOBZTree
 
-Visually compare the contents of twp directory trees.
+Visually compare the contents of two directory trees.
 
 Please see https://www.mobzystems.com/tools/mobztree/ for more information.
 
@@ -14,11 +14,11 @@ On Windows ARM, versions can be built for both x64 and amr64:
 - ```npm run build-x64``` Build for 64-bit on Windows
 - ```npm run build-arm64``` Build for arm64 on Windows
 
-## NOTE ON ARM64
+## Note on ARM64
 
-To build for arm64 on Windows, you need to run from a Visual Studio Developer prompt. If not, clang cannot be found and the application will not compile. The batch ```file init-arm.cmd``` does this on my PC.
+To build for arm64 on Windows, you need to run from a Visual Studio Developer prompt. If not, ```clang``` cannot be found and the application will not compile. The batch file ```init-arm.cmd``` does this on my PC.
 
-## Increment the version number
+## Incrementing the version number
 
 Change in **both** package.json and Cargo.toml, then run ```npm install```.
 
