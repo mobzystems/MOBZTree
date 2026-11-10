@@ -1,6 +1,6 @@
 [package]
 name = "MOBZTree"
-# This is NOT the version reported to the app!
+# This is the version reported to the app if tauri.conf.json does NOT contain a version number
 version = "0.7.1"
 description = "Visually compare the contents of two directory trees"
 authors = ["MOBZystems, Home of Tools - www.mobzystems.com"]
