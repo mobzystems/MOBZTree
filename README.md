@@ -10,7 +10,6 @@ Names are sorted using locale (which is case-insentitive?)
 - Some kind of output - a list of files? A script to reconcile both trees? A tree view of the differences?
 - Add command line options?
 - Drag and drop for directories? See webViewWindow.onDragDropEvent
-- Check for updates?
 - Fix correct path casing in Windows. Extra call to stat()? Only matters for command line
 
 ## Done
@@ -23,8 +22,9 @@ Names are sorted using locale (which is case-insentitive?)
 - Command line arguments, i.e. mobztree ``[[left-path] [right=path]] [-time] [-size] [-changed] [-unchanged] [-extra]``
 - Normalize paths before loading (from command line, but also from open dialog)
 - Show version number in title bar
+- Add icon
+- Check for updates
 
 ## In progress
 
-- Add favicon. Added so request doesn't fail anymore but icon only shows in web page, not window
 

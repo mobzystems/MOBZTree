@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
-import { faMoon as darkThemeIcon, faSun as lightThemeIcon, faClock as timeIcon } from "@fortawesome/free-regular-svg-icons";
+import { faMoon as darkThemeIcon, faSun as lightThemeIcon, faClock as timeIcon, faCircleUp as updateIcon } from "@fortawesome/free-regular-svg-icons";
 import { faRuler as sizeIcon } from "@fortawesome/free-solid-svg-icons";
 
 import * as tauriApp from '@tauri-apps/api/app';
@@ -14,9 +14,12 @@ import { TreeDiff } from "./TreeDiff";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { VisibleIcon } from "./CheckBoxIcon";
 
+import { Version, getUpdateVersion } from "./update";
+
 export default function App() {
   const [appName, setAppName] = useState<string>();
-  const [version, setVersion] = useState<string>();
+  const [version, setVersion] = useState<Version>();
+  const [updateVersion, setUpdateVersion] = useState<Version>();
 
   const [leftTree, setLeftTree] = useState<FileTree>();
   const [initialLeftPath, setInitialLeftPath] = useState<string>();
@@ -84,7 +87,7 @@ export default function App() {
       await appWindow.setTitle(`${appName} v${appVersion}`)
       // await appWindow.setIcon("/mobzystems.png");
 
-      setVersion(appVersion);
+      setVersion(new Version(appVersion));
       setAppName(appName);
 
       // Get initial theme ('light' | 'dark' | null)
@@ -117,10 +120,15 @@ export default function App() {
         setHelpMessage(typeof(e) === "string" ? e : "message" in e ? e.message : e.toString());
       }
 
+      // Launch an update check, but don't await it!
+      getUpdateVersion(appName).then(version => setUpdateVersion(version));
+
       // This is actually not returned. TODO
       return unlisten;
     })();
   }, []);
+
+  console.log(`version is ${version?.value()} update is ${updateVersion?.value()}`)
 
   return <div className="app debug-NOT">
     <div className="header level is-mobile">
@@ -177,6 +185,17 @@ export default function App() {
           <div className="level-item">
             <div className="buttons are-small">
               <button className="button is-danger" onClick={() => alert(helpMessage)}>?</button>
+            </div>
+          </div>
+        }
+        {updateVersion !== undefined && version !== undefined && updateVersion.value() > version.value() &&
+          <div className="level-item">
+            <div className="buttons are-small">
+              <button className="button is-info" onClick={() => alert(`A new version of ${appName} is available: ${updateVersion.asString()}. Download it at\n\nhttps://www.mobzystems.com/tools/${appName}`)}>
+                <span className="icon">
+                  <FontAwesomeIcon icon={updateIcon} />
+                </span>
+              </button>
             </div>
           </div>
         }
