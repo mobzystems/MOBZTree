@@ -11,7 +11,7 @@ import {
   faFolderBlank as directoryIcon,
   faFileArchive as fileIcon
 } from "@fortawesome/free-solid-svg-icons";
-import { faFolderOpen as openIcon} from "@fortawesome/free-regular-svg-icons";
+import { faFolderOpen as openIcon } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { f } from "./NumberFormat"
 
@@ -348,10 +348,10 @@ function Heading(props: {
   switch (props.status.state) {
     case "clear":
       heading = <div className="level-item">
-        <a href="#" 
+        <a href="#"
           onClick={e => { e.preventDefault(); openPath(); }}
         >Open a directory</a>&nbsp;to get started
-        </div>;
+      </div>;
       buttons = <button className={`button is-small is-primary`}
         onClick={() => openPath()}
       >
@@ -439,9 +439,9 @@ function StatusBar(props: { status: State, loadingPath: string | undefined }) {
           </div>
         </div>
         <div className="level-item">
-          {props.status.message !== undefined 
-          ? <span className="has-text-danger">{props.status.message}</span>
-          : `...${Path.sep()}${props.status.tree.relativePath(props.status.currentDirectory.fullPath)}`
+          {props.status.message !== undefined
+            ? <span className="has-text-danger">{props.status.message}</span>
+            : `...${Path.sep()}${props.status.tree.relativePath(props.status.currentDirectory.fullPath)}`
           }
         </div>
       </>;

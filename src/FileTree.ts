@@ -101,7 +101,12 @@ export class FileTree extends TreeDirectory {
     return path.substring(this.rootPath.length + 1);
   }
 
-  static async load(path: string, mustCancel: (path: string) => boolean): Promise<FileTree> {
+  static async load(requestedPath: string, mustCancel: (path: string) => boolean): Promise<FileTree> {
+    // Normalize the path first, i.e. solve . and .., but also relative paths
+    // This DOES NOT take care of case mismatches on Windows!
+    const path = await Path.resolve(requestedPath);
+    console.info(`Resolved '${requestedPath}' to '${path}'`);
+
     const tree = new FileTree(path);
     // This may raise an error!
     await tree.loadTree(mustCancel);
