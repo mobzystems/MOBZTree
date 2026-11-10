@@ -1,11 +1,26 @@
 # MOBZTree (working title)
 
-First version with layout and directory reading. Comparison now works for both files and directories.
-Names are sorted using locale (which is case-insentitive?)
+Visually compare the contents of twp directory trees.
+
+Please see https://www.mobzystems.com/tools/mobztree/ for more information.
+
+![MOBZTree](https://www.mobzystems.com/images/mobzystems/MOBZTree/mobztree.png)
+
+## Cross platform builds
+
+On every platform, ```npm run tauri build``` will build the 'right' version of the application.
+On Windows ARM, versions can be built for both x64 and amr64:
+
+- ```npm run build-x64``` Build for 64-bit on Windows
+- ```npm run build-arm64``` Build for arm64 on Windows
 
 ## NOTE ON ARM64
 
-To build for arm64 on Windows, you need to run from a Visual Studio Developer prompt. If not, clang cannot be found and the application will not compile.
+To build for arm64 on Windows, you need to run from a Visual Studio Developer prompt. If not, clang cannot be found and the application will not compile. The batch ```file init-arm.cmd``` does this on my PC.
+
+## Increment the version number
+
+Change in **both** package.json and Cargo.toml, then run ```npm install```.
 
 ## TODO
 
@@ -15,7 +30,6 @@ To build for arm64 on Windows, you need to run from a Visual Studio Developer pr
 - Add command line options?
 - Drag and drop for directories? See webViewWindow.onDragDropEvent
 - Fix correct path casing in Windows. Extra call to stat()? Only matters for command line
-- Display some more platform and OS information in the hover of the title
 
 ## Done
 
@@ -29,6 +43,7 @@ To build for arm64 on Windows, you need to run from a Visual Studio Developer pr
 - Show version number in title bar
 - Add icon
 - Check for updates
+- Display some more platform and OS information in the hover of the title
 
 ## In progress
 

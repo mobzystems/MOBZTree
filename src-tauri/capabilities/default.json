@@ -22,6 +22,7 @@
       "identifier": "http:default",
       "allow": [{ "url": "https://www.mobzystems.com/*" }]
     },
-    "dialog:default"
+    "dialog:default",
+    "os:allow-locale"
   ]
 }

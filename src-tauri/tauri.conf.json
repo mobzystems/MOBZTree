@@ -34,7 +34,7 @@
   },
   "plugins": {
     "cli": {
-      "description": "My First CLI",
+      "description": "MOBZTree - visually compare the contents of two directory trees",
       "args": [
         {
           "name": "left",
