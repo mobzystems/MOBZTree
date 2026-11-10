@@ -68,7 +68,7 @@ export default function FilePanel(props: {
   currentDirectory: string | undefined,
   onChangeCurrentDirectory: (relativePath: string) => void
 }) {
-  const [status, setStatus] = useState<State>(props.path === undefined ? Clear : requestedPathState(props.path));
+  const [status, setStatus] = useState<State>(Clear);
 
   const [lastPath, setlastPath] = useState<string | undefined>(props.path);
   const [loadingPath, setLoadingPath] = useState<string>();
@@ -126,6 +126,11 @@ export default function FilePanel(props: {
       }
     }
   }, [props.currentDirectory]);
+
+  useEffect(() => {
+    if (props.path !== undefined)
+      setStatus(requestedPathState(props.path));
+  }, [props.path]);
 
   function changeDir(newDirectory: TreeDirectory) {
     if (status.state === "loaded") {

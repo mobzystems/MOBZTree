@@ -31,5 +31,22 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "cli": {
+      "description": "My First CLI",
+      "args": [
+        {
+          "name": "left",
+          "index": 1,
+          "takesValue": true
+        },
+        {
+          "name": "right",
+          "index": 2,
+          "takesValue": true
+        }
+      ]
+    }
   }
 }

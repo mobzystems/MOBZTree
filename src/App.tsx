@@ -8,13 +8,14 @@ import { faRuler as sizeIcon } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { getCurrentWindow, Theme } from '@tauri-apps/api/window';
 import { VisibleIcon } from "./CheckBoxIcon";
+import { getMatches } from '@tauri-apps/plugin-cli';
 
 export default function App() {
   const [leftTree, setLeftTree] = useState<FileTree>();
-  const [rightTree, setRightTree] = useState<FileTree>();
+  const [initialLeftPath, setInitialLeftPath] = useState<string>();
 
-  // const [lastPathLeft, setLastPathLeft] = useState<string>();
-  // const [lastPathRight, setLastPathRight] = useState<string>();
+  const [rightTree, setRightTree] = useState<FileTree>();
+  const [initialRightPath, setInitialRightPath] = useState<string>();
 
   const [isDarkTheme, setIsDarkTheme] = useState(false);
 
@@ -75,6 +76,19 @@ export default function App() {
         applyTheme(theme);
       });
 
+      // Parse the command line. To pass arguments, call
+      // npm run tauri dev -- -- -- [left-path [right-path]]
+      const matches = await getMatches();
+      if (matches.args.left.value !== null) {
+        console.info(`Left path: ${matches.args.left.value}`);
+        setInitialLeftPath(matches.args.left.value as string);
+      }
+      if (matches.args.right.value!== null) {
+        console.info(`Right path: ${matches.args.right.value}`);
+        setInitialRightPath(matches.args.right.value as string);
+      }
+
+      // This is actually not returned. TODO
       return unlisten;
     })();
   }, []);
@@ -139,8 +153,8 @@ export default function App() {
       </div>
     </div>
     <div className="main">
-      <FilePanel name="Left" path={undefined} onLoaded={setLeftTree} diff={diff} options={filterOptions} currentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
-      <FilePanel name="Right" path={undefined} onLoaded={setRightTree} diff={diff} options={filterOptions} currentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
+      <FilePanel name="Left" path={initialLeftPath} onLoaded={setLeftTree} diff={diff} options={filterOptions} currentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
+      <FilePanel name="Right" path={initialRightPath} onLoaded={setRightTree} diff={diff} options={filterOptions} currentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
     </div>
     {/* <div className="status">
       <div className="buttons are-small">

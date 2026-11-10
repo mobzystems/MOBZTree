@@ -1,7 +1,7 @@
 # MOBZTree (working title)
 
-First version with layout and directory reading. Comarison now work for both files and directories.
-Names are now sorted using locale, which is case-insentitive?
+First version with layout and directory reading. Comparison now works for both files and directories.
+Names are sorted using locale (which is case-insentitive?)
 
 ## TODO
 
@@ -12,7 +12,10 @@ Names are now sorted using locale, which is case-insentitive?
 - [DONE] Enable cancel when loading
 - [IN PROGRESS] Add favicon. Added so request doesn't fail anymore but icon only shows in web page, not window
 - [DONE] Give files and folders an icon
+- [DONE] Command line arguments, i.e. mobztree ``[[left-path] [right=path]] [-time] [-size] [-changed] [-unchanged] [-extra]``
 - Multi-pick two folders?
 - Some kind of output - a list of files? A script to reconcile both trees? A tree view of the differences?
-- Command line arguments, i.e. mobztree ``[[left-path] [right=path]] [-time] [-size] [-changed] [-unchanged] [-extra]``
+- Add command line options?
 - Drag and drop for directories? See webViewWindow.onDragDropEvent
+- Show version number somewhere
+- Check for updates?

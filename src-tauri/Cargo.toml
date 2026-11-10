@@ -34,3 +34,6 @@ lto = true
 opt-level = "s" # 3 is 'all', 's' is size
 panic = "abort"
 strip = true
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-cli = "2"
