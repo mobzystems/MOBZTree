@@ -439,7 +439,7 @@ function StatusBar(props: { status: State, loadingPath: string | undefined }) {
         <div className="level-item">
           {props.status.message !== undefined
             ? <span className="has-text-danger">{props.status.message}</span>
-            : `...${Path.sep()}${props.status.tree.relativePath(props.status.currentDirectory.fullPath)}`
+            : <span className="is-small">{`...${Path.sep()}${props.status.tree.relativePath(props.status.currentDirectory.fullPath)}`}</span>
           }
         </div>
       </>;

@@ -56,7 +56,7 @@ export default function App() {
 
   function changeDir(relativePath: string) {
     // TODO: if syncing, i.e. if both file panels have a tree loaded
-    console.info(`Changing current directory from '${currentDirectory}' to '${relativePath}'`)
+    // console.info(`Changing current directory from '${currentDirectory}' to '${relativePath}'`)
     setCurrentDirectory(relativePath);
   }
 

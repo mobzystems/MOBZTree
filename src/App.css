@@ -86,6 +86,7 @@ html[data-theme=dark] {
   /* font-style: italic; */
   overflow: hidden;
   border-top: solid 1px lightgrey;
+  font-size: small;
 }
 
 /* .file-panel > .main {

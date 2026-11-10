@@ -93,12 +93,17 @@ export class TreeDiff {
         const [unchanged, changed, extra] = this.processDir(diffs, dir, tree, otherTree, compareSize, compareTime);
         // Get the state of the directory first. It might be extra!
         let state = this.getState(tree, otherTree, relativePath, false, false);
-        // Amend the state it is was unchanged - i.e. the directory exists on both sides:
+        // Amend the state if is was unchanged - i.e. the directory exists on both sides:
         if (state[0] === "unchanged")
           state = (changed + extra == 0)
             ? ["unchanged", "is-white"]
             : ["changed", "is-warning"];
 
+        switch (state[0]) {
+          case "unchanged": unchangedCount++; break;
+          case "changed": changedCount++; break;
+          case "extra": extraCount++; break;
+        }
         // Register this directory
         diffs.set(relativePath, state);
 
@@ -119,7 +124,22 @@ export class TreeDiff {
     const diffs = new Map<string, [DiffType, string]>();
 
     this.processDir(diffs, this.left, this.left, this.right, compareSize, compareTime);
-    this.processDir(diffs, this.right, this.right, this.left, compareSize, compareTime);
+    // This is not enough!
+    // this.processDir(diffs, this.right, this.right, this.left, compareSize, compareTime);
+    
+    // Now mark all entries in the right tree that have no status as Extra
+    for (let path of this.right.entryMap.keys()) {
+      if (!this.left.entryMap.has(path)) {
+        let entry = this.right.entryMap.get(path);
+        // Mark this entry as extra
+        diffs.set(path, ["extra", "is-success"]);
+        // Mark all parents as changed if this is a directory!
+        if (entry instanceof TreeDirectory && entry.parentDirectory !== undefined) {
+          diffs.set(this.right.relativePath(entry.parentDirectory.fullPath), ["changed", "is-warning"]);
+          entry = entry.parentDirectory;
+        }
+      }
+    }
 
     return diffs;
   }
