@@ -3,6 +3,10 @@
 First version with layout and directory reading. Comparison now works for both files and directories.
 Names are sorted using locale (which is case-insentitive?)
 
+## NOTE ON ARM64
+
+To build for arm64 on Windows, you need to run from a Visual Studio Developer prompt. If not, clang cannot be found and the application will not compile.
+
 ## TODO
 
 - Option to always show directories (for inspection and debugging)
@@ -11,6 +15,7 @@ Names are sorted using locale (which is case-insentitive?)
 - Add command line options?
 - Drag and drop for directories? See webViewWindow.onDragDropEvent
 - Fix correct path casing in Windows. Extra call to stat()? Only matters for command line
+- Display some more platform and OS information in the hover of the title
 
 ## Done
 

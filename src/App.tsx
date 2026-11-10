@@ -30,7 +30,7 @@ export default function App() {
 
   const [isDarkTheme, setIsDarkTheme] = useState(false);
 
-  const [compareSize, setCompareSize] = useState(false);
+  const [compareSize, setCompareSize] = useState(true);
   const [compareTime, setCompareTime] = useState(false);
 
   const [showUnchanged, setShowUnchanged] = useState(true);
@@ -132,7 +132,7 @@ export default function App() {
     <div className="header level is-mobile">
       <div className="level-left">
         <div className="level-item">
-          <h1 className="title" title={`${appName} version ${version}`}>{appName}</h1>
+          <h1 className="title" title={`${appName} version ${version?.asString()}`}>{appName}</h1>
         </div>
       </div>
       <div className="level-right">
