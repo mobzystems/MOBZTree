@@ -20,7 +20,7 @@ To build for arm64 on Windows, you need to run from a Visual Studio Developer pr
 
 ## Incrementing the version number
 
-Change in **both** package.json and Cargo.toml, then run ```npm install```.
+Change in **three** places: ```package.json```, ```Cargo.toml``` and ```tauri.conf.json```, then run ```npm install```. The version number in tauri.conf.json is leading!
 
 ## TODO
 
