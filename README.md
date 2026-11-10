@@ -20,7 +20,7 @@ To build for arm64 on Windows, you need to run from a Visual Studio Developer pr
 
 ## Incrementing the version number
 
-Change in rhe version number in ```Cargo.toml```. (Turns out that if you leave the version number out of ```tauri.conf.json``` it will fall back to ```Cargo.toml```. And ```package.json``` works finewithout a version number)
+Change in rhe version number in ```Cargo.toml```. (Turns out that if you leave the version number out of ```tauri.conf.json``` it will fall back to ```Cargo.toml```. And ```package.json``` works fine without a version number)
 
 ## TODO
 
