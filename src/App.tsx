@@ -20,6 +20,7 @@ export default function App() {
 
   const [leftTree, setLeftTree] = useState<FileTree>();
   const [initialLeftPath, setInitialLeftPath] = useState<string>();
+  const [helpMessage, setHelpMessage] = useState<string>();
 
   const [rightTree, setRightTree] = useState<FileTree>();
   const [initialRightPath, setInitialRightPath] = useState<string>();
@@ -64,7 +65,7 @@ export default function App() {
   // This hook runs on startup:
   useEffect(() => {
     console.info("Initializing app");
-  
+
     function applyTheme(theme: tauriWindow.Theme | null) {
       if (theme !== null) {
         if (theme === "dark")
@@ -98,14 +99,22 @@ export default function App() {
 
       // Parse the command line. To pass arguments, call
       // npm run tauri dev -- -- -- [left-path [right-path]]
-      const matches = await tauriCli.getMatches();
-      if (matches.args.left?.value) {
-        console.info(`Left path: ${matches.args.left.value}`);
-        setInitialLeftPath(matches.args.left.value as string);
+      try {
+        const matches = await tauriCli.getMatches();
+        if (matches.args.left?.value) {
+          console.info(`Left path: ${matches.args.left.value}`);
+          setInitialLeftPath(matches.args.left.value as string);
+        }
+        if (matches.args.right?.value) {
+          console.info(`Right path: ${matches.args.right.value}`);
+          setInitialRightPath(matches.args.right.value as string);
+        }
+        if (matches.args.help) {
+          setHelpMessage(matches.args.help.value as string);
+        }
       }
-      if (matches.args.right?.value) {
-        console.info(`Right path: ${matches.args.right.value}`);
-        setInitialRightPath(matches.args.right.value as string);
+      catch (e: any) {
+        setHelpMessage(typeof(e) === "string" ? e : "message" in e ? e.message : e.toString());
       }
 
       // This is actually not returned. TODO
@@ -164,11 +173,13 @@ export default function App() {
             </button>
           </div>
         </div>
-        {/* <div className="level-item">
-          <div className="buttons are-small">
-            <button className="button is-primary" onClick={() => alert(`${leftTree?.rootPath} / ${rightTree?.rootPath}`)}>Compare</button>
+        {helpMessage &&
+          <div className="level-item">
+            <div className="buttons are-small">
+              <button className="button is-danger" onClick={() => alert(helpMessage)}>?</button>
+            </div>
           </div>
-        </div> */}
+        }
       </div>
     </div>
     <div className="main">
