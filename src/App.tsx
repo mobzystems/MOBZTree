@@ -4,9 +4,9 @@ import "./App.css";
 import { faMoon as darkThemeIcon, faSun as lightThemeIcon, faClock as timeIcon } from "@fortawesome/free-regular-svg-icons";
 import { faRuler as sizeIcon } from "@fortawesome/free-solid-svg-icons";
 
-import { getVersion } from '@tauri-apps/api/app';
-import { getCurrentWindow, Theme } from '@tauri-apps/api/window';
-import { getMatches } from '@tauri-apps/plugin-cli';
+import * as tauriApp from '@tauri-apps/api/app';
+import * as tauriWindow from '@tauri-apps/api/window';
+import * as tauriCli from '@tauri-apps/plugin-cli';
 
 import FilePanel, { FilterOptions } from "./FilePanel";
 import { FileTree } from "./FileTree";
@@ -15,6 +15,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { VisibleIcon } from "./CheckBoxIcon";
 
 export default function App() {
+  const [appName, setAppName] = useState<string>();
   const [version, setVersion] = useState<string>();
 
   const [leftTree, setLeftTree] = useState<FileTree>();
@@ -64,7 +65,7 @@ export default function App() {
   useEffect(() => {
     console.info("Initializing app");
   
-    function applyTheme(theme: Theme | null) {
+    function applyTheme(theme: tauriWindow.Theme | null) {
       if (theme !== null) {
         if (theme === "dark")
           setIsDarkTheme(true);
@@ -74,12 +75,16 @@ export default function App() {
     }
 
     (async function () {
-      const appWindow = getCurrentWindow();
-      if (version === undefined) {
-        const appVersion = await getVersion();
-        setVersion(appVersion);
-        await appWindow.setTitle(`${await appWindow.title()} v${appVersion}`)
-      }
+      const appWindow = tauriWindow.getCurrentWindow();
+
+      const appVersion = await tauriApp.getVersion();
+      const appName = await tauriApp.getName();
+
+      await appWindow.setTitle(`${appName} v${appVersion}`)
+      // await appWindow.setIcon("/mobzystems.png");
+
+      setVersion(appVersion);
+      setAppName(appName);
 
       // Get initial theme ('light' | 'dark' | null)
       const theme = await appWindow.theme();
@@ -93,12 +98,12 @@ export default function App() {
 
       // Parse the command line. To pass arguments, call
       // npm run tauri dev -- -- -- [left-path [right-path]]
-      const matches = await getMatches();
-      if (matches.args.left.value !== null) {
+      const matches = await tauriCli.getMatches();
+      if (matches.args.left?.value) {
         console.info(`Left path: ${matches.args.left.value}`);
         setInitialLeftPath(matches.args.left.value as string);
       }
-      if (matches.args.right.value!== null) {
+      if (matches.args.right?.value) {
         console.info(`Right path: ${matches.args.right.value}`);
         setInitialRightPath(matches.args.right.value as string);
       }
@@ -112,7 +117,7 @@ export default function App() {
     <div className="header level is-mobile">
       <div className="level-left">
         <div className="level-item">
-          <h1 className="title" title={`MOBZTree version ${version}`}>MOBZTree</h1>
+          <h1 className="title" title={`${appName} version ${version}`}>{appName}</h1>
         </div>
       </div>
       <div className="level-right">
