@@ -22,6 +22,10 @@ const MIN_TIME_BETWEEN_UPDATES = 500;
 //   return new Promise(resolve => setTimeout(resolve, ms));
 // }
 
+// These types define the various states of this component. It starts off Clear,
+// then switches to Loading and then to Loaded or Error. Each state contains all
+// variables for that state.
+
 type ClearState = {
   state: "clear";
 };
@@ -65,7 +69,7 @@ export default function FilePanel(props: {
   onLoaded: (tree: FileTree | undefined) => void,
   diff: TreeDiff | undefined,
   options: FilterOptions,
-  currentDirectory: string | undefined,
+  requestedCurrentDirectory: string | undefined,
   onChangeCurrentDirectory: (relativePath: string) => void
 }) {
   const [status, setStatus] = useState<State>(Clear);
@@ -73,11 +77,14 @@ export default function FilePanel(props: {
   const [lastPath, setlastPath] = useState<string | undefined>(props.path);
   const [loadingPath, setLoadingPath] = useState<string>();
 
-  // console.info(`Rendering FilePanel '${props.name}' with current directory is '${props.currentDirectory}'`);
-
+  // React to a change in status
   useEffect(() => {
-    (async function doit() {
-      if (status.state === "loading") {
+    console.info(`FilePanel '${props.name}': status changed to '${status.state}'`);
+
+    (async function() {
+      if (status.state === "clear") {
+        props.onLoaded(undefined);
+      } else if (status.state === "loading") {
         // await sleep(1000); // Simulate a delay for testing
 
         setlastPath(status.requestedPath);
@@ -105,28 +112,30 @@ export default function FilePanel(props: {
           // Handle error case
           setStatus({ state: "error", errorPath: status.requestedPath, errorMessage: ("message" in e ? e.message : e.toString()) })
         }
-      } else if (status.state === "clear") {
-        props.onLoaded(undefined);
+      } else if (status.state === "loaded") {
+        status.currentDirectory = status.tree;
       }
     })();
   }, [status]);
 
+  // React to a change in the REQUESTED current directory, which is triggered by the other FilePanel (or the app)
   useEffect(() => {
-    // console.info(`FilePanel '${props.name}: current directory is now '${props.currentDirectory}'`);
-    if (props.currentDirectory !== undefined && status.state === "loaded") {
-      const entry = status.tree.entryMap.get(props.currentDirectory);
+    // console.info(`FilePanel '${props.name}': current directory is now '${props.currentDirectory}'`);
+    if (props.requestedCurrentDirectory !== undefined && status.state === "loaded") {
+      const entry = status.tree.entryMap.get(props.requestedCurrentDirectory);
       if (entry !== undefined) {
         if (entry instanceof TreeDirectory) {
           setStatus({ ...status, currentDirectory: entry as TreeDirectory, message: undefined });
         } else {
-          setStatus({ ...status, message: `FilePanel ''${props.currentDirectory}' is a file in this tree` });
+          setStatus({ ...status, message: `FilePanel ''${props.requestedCurrentDirectory}' is a file in this tree` });
         }
       } else {
-        setStatus({ ...status, message: `'${props.currentDirectory}' is not part of this tree` });
+        setStatus({ ...status, message: `'${props.requestedCurrentDirectory}' is not part of this tree` });
       }
     }
-  }, [props.currentDirectory]);
+  }, [props.requestedCurrentDirectory]);
 
+  // React to a change in the path supplied by the caller
   useEffect(() => {
     if (props.path !== undefined)
       setStatus(requestedPathState(props.path));
@@ -312,20 +321,10 @@ function Heading(props: {
   onDirectoryChanged: (newDirectory: TreeDirectory) => void,
   lastPath: string | undefined
 }) {
-  // const [baseName, setBaseName] = useState<string>();
-
-  // useEffect(() => {
-  //   if (props.status.state === "loaded") {
-  //     Path.basename(props.status.tree.rootPath).
-  //       then(name => setBaseName(name));
-  //   }
-  // }, [props.status]);
-
   let heading: ReactElement;
   let buttons: ReactElement;
 
   function openPath() {
-    // const defaultPath = props.status.state === "loaded"
     open({ title: "Open directory", directory: true, defaultPath: props.lastPath })
       .then((selectedPath) => {
         if (selectedPath) {
@@ -362,24 +361,17 @@ function Heading(props: {
       heading = <span className="is-italic">Loading. Press Cancel to interrupt.</span>;
       buttons = <button className="button is-warning"
         disabled={props.status.cancel}
-        onClick={() => (props.status as LoadingState).cancel = true /* props.setStatus({ ...(props.status as LoadingState), cancel: true })*/}
+        onClick={() => (props.status as LoadingState).cancel = true}
       >
         {props.status.cancel ? "Cancelled" : "Cancel"}
       </button>
       break;
     case "loaded":
-      // heading = <h2 className="is-marginless">{props.status.currentDirectory.fullPath}</h2>;
       heading = <>
         <h2 className="title is-marginless is-size-5" title={props.status.tree.rootPath}>{props.status.tree.name}</h2>
         {/* <p className="help subtitle">{props.status.tree.rootPath}</p> */}
       </>;
       buttons = <>
-        <button className="button is-primary"
-          title="Refresh the current directory tree"
-          onClick={() => props.setStatus(requestedPathState((props.status as LoadedState).tree.rootPath))}
-        >
-          <span className="icon is-small"><FontAwesomeIcon icon={refreshIcon} /></span>
-        </button>
         <button className="button is-info"
           title="Go to the top of the directory tree"
           disabled={props.status.currentDirectory.fullPath === props.status.tree.rootPath}
@@ -393,6 +385,12 @@ function Heading(props: {
           onClick={() => setPath((props.status as LoadedState).currentDirectory.parentDirectory)}
         >
           <span className="icon is-small"><FontAwesomeIcon icon={upIcon} /></span>
+        </button>
+        <button className="button is-primary"
+          title="Refresh the current directory tree"
+          onClick={() => props.setStatus(requestedPathState((props.status as LoadedState).tree.rootPath))}
+        >
+          <span className="icon is-small"><FontAwesomeIcon icon={refreshIcon} /></span>
         </button>
         <button className="button is-danger"
           title="Close the current directory tree"

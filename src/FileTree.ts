@@ -105,7 +105,7 @@ export class FileTree extends TreeDirectory {
     // Normalize the path first, i.e. solve . and .., but also relative paths
     // This DOES NOT take care of case mismatches on Windows!
     const path = await Path.resolve(requestedPath);
-    console.info(`Resolved '${requestedPath}' to '${path}'`);
+    // console.info(`Resolved '${requestedPath}' to '${path}'`);
 
     const tree = new FileTree(path);
     // This may raise an error!

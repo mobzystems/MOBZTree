@@ -14,9 +14,10 @@ Names are sorted using locale (which is case-insentitive?)
 - [DONE] Give files and folders an icon
 - [DONE] Command line arguments, i.e. mobztree ``[[left-path] [right=path]] [-time] [-size] [-changed] [-unchanged] [-extra]``
 - [DONE] Normalize paths before loading (from command line, but also from open dialog)
+- [DONE] Show version number in title bar
 - [WONT'T FIX] Multi-pick two folders?
 - Some kind of output - a list of files? A script to reconcile both trees? A tree view of the differences?
 - Add command line options?
 - Drag and drop for directories? See webViewWindow.onDragDropEvent
-- Show version number somewhere
 - Check for updates?
+- Fix correct path casing in Windows. Extra call to stat()? Only matters for command line

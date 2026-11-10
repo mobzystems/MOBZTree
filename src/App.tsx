@@ -1,16 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
+
+import { faMoon as darkThemeIcon, faSun as lightThemeIcon, faClock as timeIcon } from "@fortawesome/free-regular-svg-icons";
+import { faRuler as sizeIcon } from "@fortawesome/free-solid-svg-icons";
+
+import { getVersion } from '@tauri-apps/api/app';
+import { getCurrentWindow, Theme } from '@tauri-apps/api/window';
+import { getMatches } from '@tauri-apps/plugin-cli';
+
 import FilePanel, { FilterOptions } from "./FilePanel";
 import { FileTree } from "./FileTree";
 import { TreeDiff } from "./TreeDiff";
-import { faMoon as darkThemeIcon, faSun as lightThemeIcon, faClock as timeIcon } from "@fortawesome/free-regular-svg-icons";
-import { faRuler as sizeIcon } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { getCurrentWindow, Theme } from '@tauri-apps/api/window';
 import { VisibleIcon } from "./CheckBoxIcon";
-import { getMatches } from '@tauri-apps/plugin-cli';
 
 export default function App() {
+  const [version, setVersion] = useState<string>();
+
   const [leftTree, setLeftTree] = useState<FileTree>();
   const [initialLeftPath, setInitialLeftPath] = useState<string>();
 
@@ -44,16 +50,20 @@ export default function App() {
   }
 
   function changeDir(relativePath: string) {
-    // TODO: if syncing
+    // TODO: if syncing, i.e. if both file panels have a tree loaded
     console.info(`Changing current directory from '${currentDirectory}' to '${relativePath}'`)
     setCurrentDirectory(relativePath);
   }
 
+  // Update the DOM when the theme changes
   useEffect(() => {
     document.getElementsByTagName("html")[0].setAttribute("data-theme", isDarkTheme ? "dark" : "light");
   }, [isDarkTheme]);
 
+  // This hook runs on startup:
   useEffect(() => {
+    console.info("Initializing app");
+  
     function applyTheme(theme: Theme | null) {
       if (theme !== null) {
         if (theme === "dark")
@@ -65,6 +75,11 @@ export default function App() {
 
     (async function () {
       const appWindow = getCurrentWindow();
+      if (version === undefined) {
+        const appVersion = await getVersion();
+        setVersion(appVersion);
+        await appWindow.setTitle(`${await appWindow.title()} v${appVersion}`)
+      }
 
       // Get initial theme ('light' | 'dark' | null)
       const theme = await appWindow.theme();
@@ -97,8 +112,7 @@ export default function App() {
     <div className="header level is-mobile">
       <div className="level-left">
         <div className="level-item">
-          <h1 className="title">MOBZTree</h1>
-          {/* <h2 className="subtitle">A Tauri + React + Bulma test</h2> */}
+          <h1 className="title" title={`MOBZTree version ${version}`}>MOBZTree</h1>
         </div>
       </div>
       <div className="level-right">
@@ -153,8 +167,8 @@ export default function App() {
       </div>
     </div>
     <div className="main">
-      <FilePanel name="Left" path={initialLeftPath} onLoaded={setLeftTree} diff={diff} options={filterOptions} currentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
-      <FilePanel name="Right" path={initialRightPath} onLoaded={setRightTree} diff={diff} options={filterOptions} currentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
+      <FilePanel name="Left" path={initialLeftPath} onLoaded={setLeftTree} diff={diff} options={filterOptions} requestedCurrentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
+      <FilePanel name="Right" path={initialRightPath} onLoaded={setRightTree} diff={diff} options={filterOptions} requestedCurrentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
     </div>
     {/* <div className="status">
       <div className="buttons are-small">
