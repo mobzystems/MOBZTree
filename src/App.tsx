@@ -74,6 +74,7 @@ export default function App() {
   // Update the DOM when the theme changes
   useEffect(() => {
     document.getElementsByTagName("html")[0].setAttribute("data-theme", isDarkTheme ? "dark" : "light");
+    tauriWindow.getCurrentWindow().setTheme(isDarkTheme ? "dark" : "light")
   }, [isDarkTheme]);
 
   // This hook runs on startup:
