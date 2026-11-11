@@ -50,10 +50,6 @@ export class TreeDiff {
       } else
         // One file, one directory
         return ["extra", "is-success"];
-      // else if (leftItem.modifiedTime < rightItem.modifiedTime)
-      //   return ["older", "is-light"];
-      // else
-      //   return ["newer", "is-light"];
     }
 
     throw new Error(`Unhandled case in TreeDiff.ts comparing '${path}'`);
@@ -89,28 +85,36 @@ export class TreeDiff {
     // Then process all subdirectories
     for (let dir of directory.directories) {
       const relativePath = tree.relativePath(dir.fullPath);
-      if (!diffs.has(relativePath)) {
-        const [unchanged, changed, extra] = this.processDir(diffs, dir, tree, otherTree, compareSize, compareTime);
-        // Get the state of the directory first. It might be extra!
-        let state = this.getState(tree, otherTree, relativePath, false, false);
-        // Amend the state if is was unchanged - i.e. the directory exists on both sides:
-        if (state[0] === "unchanged")
-          state = (changed + extra == 0)
-            ? ["unchanged", "is-white"]
-            : ["changed", "is-warning"];
+      console.info(relativePath);
+      const [unchanged, changed, extra] = this.processDir(diffs, dir, tree, otherTree, compareSize, compareTime);
 
-        switch (state[0]) {
-          case "unchanged": unchangedCount++; break;
-          case "changed": changedCount++; break;
-          case "extra": extraCount++; break;
+      // Get the state of the directory first. It might be extra!
+      let state = this.getState(tree, otherTree, relativePath, false, false);
+
+      // Amend the state from unchanged to changed if we hae any differences:
+      if (state[0] === "unchanged") {
+        if (changed + extra !== 0) {
+          state = ["changed", "is-warning"];
+          // ALWAYS register the change in state:
+          diffs.set(relativePath, state);
         }
-        // Register this directory
+      } 
+      
+      // Register this directory if it was't already
+      if (!diffs.has(relativePath)) {
         diffs.set(relativePath, state);
-
-        extraCount += extra;
-        changedCount += changed;
-        unchangedCount += unchanged;
       }
+
+      // Count this difference fo the return valuue
+      switch (state[0]) {
+        case "unchanged": unchangedCount++; break;
+        case "changed": changedCount++; break;
+        case "extra": extraCount++; break;
+      }
+
+      extraCount += extra;
+      changedCount += changed;
+      unchangedCount += unchanged;
     }
     return [unchangedCount, changedCount, extraCount];
   }
@@ -120,26 +124,12 @@ export class TreeDiff {
    * entries present in both with their associated status
    */
   getAllDiffs(compareSize: boolean, compareTime: boolean) {
-    // A list of entries
+    // A list of difference states for each entry
     const diffs = new Map<string, [DiffType, string]>();
 
+    // Process left to right, then right to left:
     this.processDir(diffs, this.left, this.left, this.right, compareSize, compareTime);
-    // This is not enough!
-    // this.processDir(diffs, this.right, this.right, this.left, compareSize, compareTime);
-    
-    // Now mark all entries in the right tree that have no status as Extra
-    for (let path of this.right.entryMap.keys()) {
-      if (!this.left.entryMap.has(path)) {
-        let entry = this.right.entryMap.get(path);
-        // Mark this entry as extra
-        diffs.set(path, ["extra", "is-success"]);
-        // Mark all parents as changed if this is a directory!
-        if (entry instanceof TreeDirectory && entry.parentDirectory !== undefined) {
-          diffs.set(this.right.relativePath(entry.parentDirectory.fullPath), ["changed", "is-warning"]);
-          entry = entry.parentDirectory;
-        }
-      }
-    }
+    this.processDir(diffs, this.right, this.right, this.left, compareSize, compareTime);
 
     return diffs;
   }
