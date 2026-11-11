@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import "./App.css";
+import "./App.scss";
 
 import { faMoon as darkThemeIcon, faSun as lightThemeIcon, faClock as timeIcon, faCircleUp as updateIcon } from "@fortawesome/free-regular-svg-icons";
 import { faRuler as sizeIcon } from "@fortawesome/free-solid-svg-icons";

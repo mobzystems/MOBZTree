@@ -24,7 +24,8 @@
     "@tauri-apps/plugin-os": "^2.4.0",
     "bulma": "^1.0.4",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "sass": "^1.108.2"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
