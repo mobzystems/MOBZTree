@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Exclude releases, but not the README
+releases/*
+!releases/README
