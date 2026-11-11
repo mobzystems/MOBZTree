@@ -16,11 +16,11 @@ On Windows ARM, versions can be built for both x64 and amr64:
 
 ## Note on ARM64
 
-To build for arm64 on Windows, you need to run from a Visual Studio Developer prompt. If not, ```clang``` cannot be found and the application will not compile. The batch file ```init-arm.cmd``` does this on my PC.
+To build for arm64 on Windows, you need to run from a Visual Studio Developer prompt. If not, ```clang``` cannot be found and the application will not compile. The powershell-script ```p.ps1``` does this on my PC for Visual Studio 18 (2026). Start your development session by executing this script **once** in your Powershell terminal.
 
 ## Incrementing the version number
 
-Change in rhe version number in ```Cargo.toml```. (Turns out that if you leave the version number out of ```tauri.conf.json``` it will fall back to ```Cargo.toml```. And ```package.json``` works fine without a version number)
+Change the version number in ```Cargo.toml```. (Turns out that if you leave the version number out of ```tauri.conf.json``` it will fall back to ```Cargo.toml```. And ```package.json``` works fine without a version number, so there is only one version.)
 
 ## TODO
 

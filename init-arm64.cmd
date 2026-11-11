@@ -1,1 +1,0 @@
-%comspec% /k "C:\Program Files\Microsoft Visual Studio\18\Professional\VC\Auxiliary\Build\vcvarsall.bat" arm64
