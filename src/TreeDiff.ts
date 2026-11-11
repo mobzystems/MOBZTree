@@ -85,7 +85,6 @@ export class TreeDiff {
     // Then process all subdirectories
     for (let dir of directory.directories) {
       const relativePath = tree.relativePath(dir.fullPath);
-      console.info(relativePath);
       const [unchanged, changed, extra] = this.processDir(diffs, dir, tree, otherTree, compareSize, compareTime);
 
       // Get the state of the directory first. It might be extra!
