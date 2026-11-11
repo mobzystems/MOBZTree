@@ -20,17 +20,19 @@ function BuildTarget([string]$Target, [string]$version, [string]$code) {
   # return
 
   &npm run tauri build -- -- --target=$Target
-  if (Test-Path $($release).exe -PathType Leaf) {
+  if (Test-Path "$($release).exe" -PathType Leaf) {
     Write-Warning "Removing '$($release).exe'"
-    Remove-Item $($release).exe
+    Remove-Item "$($release).exe"
   }
-  Move-Item $exe $($release).exe
+  Move-Item $exe "$($release).exe"
 
   if (Test-Path $zip -PathType Leaf) {
     Write-Warning "Removing '$zip'"
     Remove-Item $zip
   }
-  Compress-Archive $($release).exe $zip
+  Compress-Archive "$($release).exe" $zip
+
+  Write-Output "===> $zip created"
 }
 
 function BuildTargetWSL([string]$Target, [string]$version, [string]$code) {
@@ -38,7 +40,7 @@ function BuildTargetWSL([string]$Target, [string]$version, [string]$code) {
   [string]$zip = "$($release).zip"
 
   [string]$releases = (Resolve-Path "./releases").Path
-  &wsl --cd ~/MOBZTree -- bash -c -i "git pull && npm run tauri build -- -- --target=$Target"
+  &wsl --cd ~/MOBZTree -- bash -c -i "git pull && npm install && npm run tauri build -- -- --target=$Target"
   &wsl --cd ~/MOBZTree -- bash -c "cp ./src-tauri/target/$Target/release/$NAME ``wslpath `"$releases`"``/$($NAME)_$($code)_$($version)"
 
   if (Test-Path $zip -PathType Leaf) {
@@ -46,12 +48,14 @@ function BuildTargetWSL([string]$Target, [string]$version, [string]$code) {
     Remove-Item $zip
   }
   Compress-Archive $release $zip
+
+  Write-Output "===> $zip created"
 }
 
 # Windows x64
-# BuildTarget 'x86_64-pc-windows-msvc' $Version 'win-x64'
+BuildTarget 'x86_64-pc-windows-msvc' $Version 'win-x64'
 # Windows arm64
-# BuildTarget 'aarch64-pc-windows-msvc' $Version 'win-arm64'
+BuildTarget 'aarch64-pc-windows-msvc' $Version 'win-arm64'
 
 # Linux arm64 via WSL
 BuildTargetWSL 'aarch64-unknown-linux-gnu' $Version 'linux-arm64'
