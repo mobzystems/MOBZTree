@@ -8,6 +8,7 @@ import * as tauriApp from '@tauri-apps/api/app';
 import * as tauriWindow from '@tauri-apps/api/window';
 import * as tauriCli from '@tauri-apps/plugin-cli';
 import * as tauriOs from '@tauri-apps/plugin-os';
+import * as tauriOpen from '@tauri-apps/plugin-opener';
 
 import FilePanel, { FilterOptions } from "./FilePanel";
 import { FileTree } from "./FileTree";
@@ -69,6 +70,20 @@ export default function App() {
     // TODO: if syncing, i.e. if both file panels have a tree loaded
     // console.info(`Changing current directory from '${currentDirectory}' to '${relativePath}'`)
     setCurrentDirectory(relativePath);
+  }
+
+  async function updateAvailable(version: Version) {
+    const updateUrl = `https://www.mobzystems.com/tools/${appName}`;
+
+    if (await confirm(
+      `A new version of ${appName} is available: ${version.asString()}. Download it at
+
+${updateUrl}
+
+Do you want to open that web page now?`
+    )) {
+      tauriOpen.openUrl(updateUrl + "#download");
+    }
   }
 
   // Update the DOM when the theme changes
@@ -149,7 +164,7 @@ export default function App() {
     })();
   }, []);
 
-  let infoString = info === undefined 
+  let infoString = info === undefined
     ? ""
     : ` on ${info.type}/${info.family} [${info.arch}] (${info.platform} v${info.version}) - ${info.locale}`;
 
@@ -214,7 +229,7 @@ export default function App() {
         {updateVersion !== undefined && version !== undefined && updateVersion.value() > version.value() &&
           <div className="level-item">
             <div className="buttons are-small">
-              <button className="button is-info" onClick={() => alert(`A new version of ${appName} is available: ${updateVersion.asString()}. Download it at\n\nhttps://www.mobzystems.com/tools/${appName}`)}>
+              <button className="button is-info" onClick={() => updateAvailable(updateVersion)}>
                 <span className="icon">
                   <FontAwesomeIcon icon={updateIcon} />
                 </span>

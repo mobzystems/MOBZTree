@@ -30,6 +30,9 @@ Change the version number in ```Cargo.toml```. (Turns out that if you leave the 
 - Add command line options?
 - Drag and drop for directories? See webViewWindow.onDragDropEvent
 - Fix correct path casing in Windows. Extra call to stat()? Only matters for command line
+- Reveal a directory
+- use "npm run tauri build -- -- --config '{ "version": "x.y.z" }' somehow. Doesn't work?
+- Increment Cargo.toml version number automatically?
 
 ## Done
 
@@ -43,6 +46,7 @@ Change the version number in ```Cargo.toml```. (Turns out that if you leave the 
 - Show version number in title bar
 - Add icon
 - Check for updates
+- Open the update URL
 - Display some more platform and OS information in the hover of the title
 
 ## In progress
