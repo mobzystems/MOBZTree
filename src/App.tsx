@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import "./App.scss";
 
 import { faMoon as darkThemeIcon, faSun as lightThemeIcon, faClock as timeIcon, faCircleUp as updateIcon } from "@fortawesome/free-regular-svg-icons";
-import { faRuler as sizeIcon } from "@fortawesome/free-solid-svg-icons";
+import { faRuler as sizeIcon, faChartLine as reportIcon } from "@fortawesome/free-solid-svg-icons";
 
 import * as tauriApp from '@tauri-apps/api/app';
 import * as tauriWindow from '@tauri-apps/api/window';
@@ -15,6 +15,7 @@ import { FileTree } from "./FileTree";
 import { TreeDiff } from "./TreeDiff";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { VisibleIcon } from "./CheckBoxIcon";
+import DifferenceDialog from "./DifferenceDialog";
 
 import { Version, getUpdateVersion } from "./update";
 
@@ -50,6 +51,8 @@ export default function App() {
   const [showExtra, setShowExtra] = useState(true);
 
   const [currentDirectory, setCurrentDirectory] = useState<string>();
+
+  const [reportDialogVisible, setReportDialogVisible] = useState(false);
 
   const diff = useMemo(() => {
     if (leftTree !== undefined && rightTree !== undefined)
@@ -168,89 +171,116 @@ Do you want to open that web page now?`
     ? ""
     : ` on ${info.type}/${info.family} [${info.arch}] (${info.platform} v${info.version}) - ${info.locale}`;
 
-  return <div className="app debug-NOT">
-    <div className="header level is-mobile">
-      <div className="level-left">
-        <div className="level-item">
-          <h1 className="title" title={`${appName} version ${version?.asString()}${infoString}`}>{appName}</h1>
-        </div>
-      </div>
-      <div className="level-right">
-        <div className="level-item">
-          <div className="buttons are-small has-addons">
-            <button className={`button ${isDarkTheme ? "is-dark" : "is-light"}`}
-              onClick={() => setIsDarkTheme(!isDarkTheme)} title="Switch dark/light mode">
-              <span className="icon">
-                <FontAwesomeIcon icon={isDarkTheme ? darkThemeIcon : lightThemeIcon} />
-              </span>
-              <span>{isDarkTheme ? "Dark" : "Light"}</span>
-            </button>
-          </div>
-        </div>
-        <div className="level-item">
-          <div className="buttons are-small has-addons">
-            <button className={`button is-info ${!compareSize ? "is-light" : ""}`} onClick={() => setCompareSize(!compareSize)} title="Compare files by size">
-              <span className="icon">
-                <FontAwesomeIcon icon={sizeIcon} />
-              </span>
-              <span>Size</span>
-            </button>
-            <button className={`button is-info ${!compareTime ? "is-light" : ""}`} onClick={() => setCompareTime(!compareTime)} title="Compare files by time">
-              <span className="icon">
-                <FontAwesomeIcon icon={timeIcon} />
-              </span>
-              <span>Time</span>
-            </button>
-          </div>
-        </div>
-        <div className="level-item">
-          <div className="buttons are-small has-addons">
-            <button className={`button ${!showUnchanged ? "is-light" : "is-dark"}`} onClick={() => setShowUnchanged(!showUnchanged)} title="Show/Hide unchanged files">
-              <VisibleIcon state={showUnchanged} />
-              <span>Unchanged</span>
-            </button>
-            <button className={`button is-warning ${!showChanged ? "is-light" : ""}`} onClick={() => setShowChanged(!showChanged)} title="Show/Hide changed files">
-              <VisibleIcon state={showChanged} />
-              <span>Changed</span>
-            </button>
-            <button className={`button is-success ${!showExtra ? "is-light" : ""}`} onClick={() => setShowExtra(!showExtra)} title="Show/Hide extra files">
-              <VisibleIcon state={showExtra} />
-              <span>Extra</span>
-            </button>
-          </div>
-        </div>
-        {helpMessage &&
+  return <>
+    <div className="app debug-NOT">
+      <div className="header level is-mobile">
+        <div className="level-left">
           <div className="level-item">
-            <div className="buttons are-small">
-              <button className="button is-danger" onClick={() => alert(helpMessage)}>?</button>
-            </div>
+            <h1 className="title" title={`${appName} version ${version?.asString()}${infoString}`}>{appName}</h1>
           </div>
-        }
-        {updateVersion !== undefined && version !== undefined && updateVersion.value() > version.value() &&
+        </div>
+        <div className="level-right">
           <div className="level-item">
-            <div className="buttons are-small">
-              <button className="button is-info" onClick={() => updateAvailable(updateVersion)}>
+            <div className="buttons are-small has-addons">
+              <button className={`button ${isDarkTheme ? "is-dark" : "is-light"}`}
+                onClick={() => setIsDarkTheme(!isDarkTheme)} title="Switch dark/light mode">
                 <span className="icon">
-                  <FontAwesomeIcon icon={updateIcon} />
+                  <FontAwesomeIcon icon={isDarkTheme ? darkThemeIcon : lightThemeIcon} />
                 </span>
+                <span>{isDarkTheme ? "Dark" : "Light"}</span>
               </button>
             </div>
           </div>
-        }
+          <div className="level-item">
+            <div className="buttons are-small has-addons">
+              <button className={`button is-info ${!compareSize ? "is-light" : ""}`} onClick={() => setCompareSize(!compareSize)} title="Compare files by size">
+                <span className="icon">
+                  <FontAwesomeIcon icon={sizeIcon} />
+                </span>
+                <span>Size</span>
+              </button>
+              <button className={`button is-info ${!compareTime ? "is-light" : ""}`} onClick={() => setCompareTime(!compareTime)} title="Compare files by time">
+                <span className="icon">
+                  <FontAwesomeIcon icon={timeIcon} />
+                </span>
+                <span>Time</span>
+              </button>
+            </div>
+          </div>
+          <div className="level-item">
+            <div className="buttons are-small has-addons">
+              <button className={`button ${!showUnchanged ? "is-light" : "is-dark"}`} onClick={() => setShowUnchanged(!showUnchanged)} title="Show/Hide unchanged files">
+                <VisibleIcon state={showUnchanged} />
+                <span>Unchanged</span>
+              </button>
+              <button className={`button is-warning ${!showChanged ? "is-light" : ""}`} onClick={() => setShowChanged(!showChanged)} title="Show/Hide changed files">
+                <VisibleIcon state={showChanged} />
+                <span>Changed</span>
+              </button>
+              <button className={`button is-success ${!showExtra ? "is-light" : ""}`} onClick={() => setShowExtra(!showExtra)} title="Show/Hide extra files">
+                <VisibleIcon state={showExtra} />
+                <span>Extra</span>
+              </button>
+            </div>
+          </div>
+          {helpMessage &&
+            <div className="level-item">
+              <div className="buttons are-small">
+                <button className="button is-danger" onClick={() => alert(helpMessage)}>?</button>
+              </div>
+            </div>
+          }
+          {diff !== undefined &&
+            <div className="level-item">
+              <div className="buttons are-small">
+                <button className="button is-info" 
+                  title="Show a report of the differences"
+                  onClick={() => setReportDialogVisible(true)}
+                >
+                  <span className="icon">
+                    <FontAwesomeIcon icon={reportIcon} />
+                  </span>
+                </button>
+              </div>
+            </div>
+          }
+          {updateVersion !== undefined && version !== undefined && updateVersion.value() > version.value() &&
+            <div className="level-item">
+              <div className="buttons are-small">
+                <button className="button is-info"
+                  title="An update is available"
+                  onClick={() => updateAvailable(updateVersion)}
+                >
+                  <span className="icon">
+                    <FontAwesomeIcon icon={updateIcon} />
+                  </span>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
       </div>
-    </div>
-    <div className="main">
-      <FilePanel name="Left" path={initialLeftPath} onLoaded={setLeftTree} diff={diff} options={filterOptions} requestedCurrentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
-      <FilePanel name="Right" path={initialRightPath} onLoaded={setRightTree} diff={diff} options={filterOptions} requestedCurrentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
-    </div>
-    {/* <div className="status">
+      <div className="main">
+        <FilePanel name="Left" path={initialLeftPath} onLoaded={setLeftTree} diff={diff} options={filterOptions} requestedCurrentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
+        <FilePanel name="Right" path={initialRightPath} onLoaded={setRightTree} diff={diff} options={filterOptions} requestedCurrentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
+      </div>
+      {/* <div className="status">
       <div className="buttons are-small">
         <button className="button is-warning">Button 1</button>
         <button className="button is-danger">Button 2</button>
       </div>
       MOBZTree v0.7.0 by <a target="_blank">MOBZystems, Home of Tools</a>
     </div> */}
-  </div>
+    </div>
+    {reportDialogVisible && leftTree && rightTree && diff &&
+      <div className="modal is-active">
+        <div className="modal-background"></div>
+        <div className="modal-content">
+          <DifferenceDialog leftTree={leftTree} rightTree={rightTree} diff={diff} onClose={() => setReportDialogVisible(false)} />
+        </div>
+        <button className="modal-close is-large" aria-label="close" onClick={() => setReportDialogVisible(false)}></button>
+      </div>}
+  </>;
 }
 
 

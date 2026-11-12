@@ -22,6 +22,12 @@ To build for arm64 on Windows, you need to run from a Visual Studio Developer pr
 
 Change the version number in ```Cargo.toml```. (Turns out that if you leave the version number out of ```tauri.conf.json``` it will fall back to ```Cargo.toml```. And ```package.json``` works fine without a version number, so there is only one version.)
 
+## Testing
+
+To quickly open ne or two directories a startup, use:
+
+```npm run tauri dev -- -- -- -- [left-path] [right-path]]```
+
 ## TODO
 
 - Option to always show directories (for inspection and debugging)
