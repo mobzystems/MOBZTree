@@ -272,11 +272,11 @@ Do you want to open that web page now?`
       MOBZTree v0.7.0 by <a target="_blank">MOBZystems, Home of Tools</a>
     </div> */}
     </div>
-    {reportDialogVisible && leftTree && rightTree && diff &&
-      <div className="modal is-active">
+    {reportDialogVisible && diff &&
+      <div className="modal is-active is-fullheight">
         <div className="modal-background"></div>
         <div className="modal-content">
-          <DifferenceDialog leftTree={leftTree} rightTree={rightTree} diff={diff} onClose={() => setReportDialogVisible(false)} />
+          <DifferenceDialog diff={diff} onClose={() => setReportDialogVisible(false)} />
         </div>
         <button className="modal-close is-large" aria-label="close" onClick={() => setReportDialogVisible(false)}></button>
       </div>}

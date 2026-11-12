@@ -136,6 +136,55 @@ html[data-theme=dark] {
   }
 }
 
+#root>.modal {
+  & .modal-content {
+    // Do not limit dialog width
+    width: auto;
+    // Center it
+    // margin: 0 auto;
+
+  }
+  
+  // When the dialog is full height, set height 100% in the dialogs
+  // modal content and its first child:
+  &.is-fullheight .modal-content  {
+   &, & > * {
+    height: 100%;
+   }
+  }
+
+  & .box {
+    max-height: 100%;
+    overflow: auto;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+
+    & .content {
+      overflow: auto;
+      margin: 0 0 0.5rem 0;
+      border-top: solid 1px #ccc;
+      border-bottom: solid 1px #ccc;
+      padding: 0.5rem 0;
+    }
+  }
+}
+
+.tree {
+  ul {
+    margin-top: 0 !important;
+    margin-inline: 0;
+  }
+  li {
+    margin-inline: 0.5rem 0.5rem;
+  }
+  li, ul {
+    list-style: none;
+  }
+  li.collapsed > ul {
+    display: none;
+  }
+}
+
 // Cells in a table.nowrap don't wrap
 table.nowrap>tbody>tr>td {
   white-space: nowrap;

@@ -7,7 +7,7 @@ export type DiffType = "unchanged" | "changed" | "extra" | "???";
 export class TreeDiff {
   public diffMap = new Map<string, [DiffType, string]>();
 
-  constructor(protected left: FileTree, protected right: FileTree, compareSize: boolean, compareTime: boolean) {
+  constructor(public leftTree: FileTree, public rightTree: FileTree, compareSize: boolean, compareTime: boolean) {
     this.diffMap = this.getAllDiffs(compareSize, compareTime);
   }
 
@@ -127,8 +127,8 @@ export class TreeDiff {
     const diffs = new Map<string, [DiffType, string]>();
 
     // Process left to right, then right to left:
-    this.processDir(diffs, this.left, this.left, this.right, compareSize, compareTime);
-    this.processDir(diffs, this.right, this.right, this.left, compareSize, compareTime);
+    this.processDir(diffs, this.leftTree, this.leftTree, this.rightTree, compareSize, compareTime);
+    this.processDir(diffs, this.rightTree, this.rightTree, this.leftTree, compareSize, compareTime);
 
     return diffs;
   }
