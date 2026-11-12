@@ -148,7 +148,7 @@ export default function FilePanel(props: {
     }
   }
 
-  return <div className="file-panel box-NOT">
+  return <div className="file-panel">
     <Heading status={status} setStatus={setStatus} onDirectoryChanged={changeDir} lastPath={lastPath} />
     <div className="main">
       {status.state === "error" && <div className="notification is-danger">{status.errorMessage}</div>}
@@ -352,6 +352,7 @@ function Heading(props: {
         >Open a directory</a>&nbsp;to get started
       </div>;
       buttons = <button className={`button is-small is-primary`}
+        title="Open an directory tree"
         onClick={() => openPath()}
       >
         <span className="icon is-small"><FontAwesomeIcon icon={openIcon} /></span>
@@ -360,6 +361,7 @@ function Heading(props: {
     case "loading":
       heading = <span className="is-italic">Loading. Press Cancel to interrupt.</span>;
       buttons = <button className="button is-warning"
+        title="Cancel loading the directory tree"
         disabled={props.status.cancel}
         onClick={() => (props.status as LoadingState).cancel = true}
       >

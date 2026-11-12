@@ -137,20 +137,40 @@ html[data-theme=dark] {
 }
 
 #root>.modal {
+  .modal-background {
+    background-color: rgba(0, 0, 0, 70%)
+  }
+
   & .modal-content {
     // Do not limit dialog width
     width: auto;
     // Center it
-    // margin: 0 auto;
-
+    // margin: 1rem auto;
   }
-  
+
   // When the dialog is full height, set height 100% in the dialogs
   // modal content and its first child:
-  &.is-fullheight .modal-content  {
-   &, & > * {
-    height: 100%;
-   }
+  &.is-fullheight,
+  &.is-fullscreen {
+    .modal-content {
+
+      &,
+      &>* {
+        height: 100%;
+      }
+    }
+  }
+
+  &.is-fullwidth,
+  &.is-fullscreen {
+    .modal-content {
+
+      &,
+      &>* {
+        width: calc(100% - 2 * 0.5rem);
+        margin: 0 auto;
+      }
+    }
   }
 
   & .box {
@@ -170,17 +190,24 @@ html[data-theme=dark] {
 }
 
 .tree {
+  font-size: small;
+
+  &,
   ul {
     margin-top: 0 !important;
     margin-inline: 0;
   }
+
   li {
     margin-inline: 0.5rem 0.5rem;
   }
-  li, ul {
+
+  li,
+  ul {
     list-style: none;
   }
-  li.collapsed > ul {
+
+  li.collapsed>ul {
     display: none;
   }
 }

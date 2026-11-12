@@ -230,20 +230,19 @@ Do you want to open that web page now?`
               </div>
             </div>
           }
-          {diff !== undefined &&
-            <div className="level-item">
-              <div className="buttons are-small">
-                <button className="button is-info" 
-                  title="Show a report of the differences"
-                  onClick={() => setReportDialogVisible(true)}
-                >
-                  <span className="icon">
-                    <FontAwesomeIcon icon={reportIcon} />
-                  </span>
-                </button>
-              </div>
+          <div className="level-item">
+            <div className="buttons are-small">
+              <button className="button is-info"
+                title="Show a report of the differences"
+                disabled={diff === undefined}
+                onClick={() => setReportDialogVisible(true)}
+              >
+                <span className="icon">
+                  <FontAwesomeIcon icon={reportIcon} />
+                </span>
+              </button>
             </div>
-          }
+          </div>
           {updateVersion !== undefined && version !== undefined && updateVersion.value() > version.value() &&
             <div className="level-item">
               <div className="buttons are-small">
@@ -273,7 +272,7 @@ Do you want to open that web page now?`
     </div> */}
     </div>
     {reportDialogVisible && diff &&
-      <div className="modal is-active is-fullheight">
+      <div className="modal is-active is-fullheight is-fullwidth">
         <div className="modal-background"></div>
         <div className="modal-content">
           <DifferenceDialog diff={diff} onClose={() => setReportDialogVisible(false)} />

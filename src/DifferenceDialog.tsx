@@ -95,6 +95,6 @@ function DifferenceTree(props: {
   diff: TreeDiff
 }) {
   return <ul className="content is-fullheight tree">
-    <DiffList name="/" state="both" left={props.diff.leftTree} right={props.diff.rightTree} collapsed={true} />
+    <DiffList name="/" state="both" left={props.diff.leftTree} right={props.diff.rightTree} collapsed={false} />
   </ul>;
 }
