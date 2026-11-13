@@ -4,12 +4,18 @@
 
 [CmdLetBinding()]
 Param(
-  [Parameter(Mandatory)]
-  [string]$Version
+  [string]$Version = ""
 )
 
 # The name of the product to build
 $NAME = 'MOBZTree'
+
+if ($Version -eq "") {
+  $version = .\get-toml-setting.ps1 ./src-tauri/Cargo.toml package version
+  Write-Output "Building version $Version..."
+}
+
+# return
 
 function BuildTarget([string]$Target, [string]$version, [string]$code) {
   [string]$exe = "./src-tauri/target/$Target/release/$($NAME).exe"

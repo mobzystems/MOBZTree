@@ -14,6 +14,8 @@ On Windows ARM, versions can be built for both x64 and amr64:
 - ```npm run build-x64``` Build for 64-bit on Windows
 - ```npm run build-arm64``` Build for arm64 on Windows
 
+The Powershell script ```build-all.ps1``` can serve as a base for a more versatile build. It builds various versions, optionally via WSL on Windows, appending the version number and platform, to the ```./releases``` folder. (Using ```get-toms-setting.ps1``` to read the version number from ```Cargo.toml```)
+
 ## Note on ARM64
 
 To build for arm64 on Windows, you need to run from a Visual Studio Developer prompt. If not, ```clang``` cannot be found and the application will not compile. The powershell-script ```p.ps1``` does this on my PC for Visual Studio 18 (2026). Start your development session by executing this script **once** in your Powershell terminal.
