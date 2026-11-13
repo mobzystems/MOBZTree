@@ -4,6 +4,9 @@
 
 [CmdLetBinding()]
 Param(
+  # Target(s) to build. Valid targets are win-x86, win-x64, win-arm64 and linux-arm64
+  [string[]]$Target = "all",
+  # Optional version number. If not specified, read from Cargo.toml
   [string]$Version = ""
 )
 
@@ -12,8 +15,9 @@ $NAME = 'MOBZTree'
 
 if ($Version -eq "") {
   $version = .\get-toml-setting.ps1 ./src-tauri/Cargo.toml package version
-  Write-Output "Building version $Version..."
 }
+
+Write-Output "Building version $Version...`n"
 
 # return
 
@@ -25,7 +29,7 @@ function BuildTarget([string]$Target, [string]$version, [string]$code) {
   # Write-Output "Building $exe $($release).exe $zip"
   # return
 
-  Write-Output "`n`===> Building $code ($Target)...`n"
+  Write-Output "===> Building $code ($Target)..."
 
   &npm run tauri build -- -- --target=$Target
   if (Test-Path "$($release).exe" -PathType Leaf) {
@@ -40,7 +44,7 @@ function BuildTarget([string]$Target, [string]$version, [string]$code) {
   }
   Compress-Archive "$($release).exe" $zip
 
-  Write-Output "`n`n===> $zip created`n"
+  Write-Output "`n===> $zip created`n"
 }
 
 function BuildTargetWSL([string]$Target, [string]$version, [string]$code) {
@@ -49,7 +53,7 @@ function BuildTargetWSL([string]$Target, [string]$version, [string]$code) {
 
   [string]$releases = (Resolve-Path "./releases").Path
 
-  Write-Output "`n`===> Building $code ($Target) via WSL...`n"
+  Write-Output "===> Building $code ($Target) via WSL..."
 
   &wsl --cd ~/MOBZTree -- bash -c -i "git pull && npm install && npm run tauri build -- -- --target=$Target"
   &wsl --cd ~/MOBZTree -- bash -c "cp ./src-tauri/target/$Target/release/$NAME ``wslpath `"$releases`"``/$($NAME)_$($code)_$($version)"
@@ -60,13 +64,25 @@ function BuildTargetWSL([string]$Target, [string]$version, [string]$code) {
   }
   Compress-Archive $release $zip
 
-  Write-Output "`n`n===> $zip created`n"
+  Write-Output "`n===> $zip created`n"
 }
 
-# Windows x64
-BuildTarget 'x86_64-pc-windows-msvc' $Version 'win-x64'
-# Windows arm64
-BuildTarget 'aarch64-pc-windows-msvc' $Version 'win-arm64'
+if ($Target -eq "all" -or $Target.Contains('win-x86')) {
+  # Windows x86
+  BuildTarget 'i686-pc-windows-msvc' $Version 'win-x86'
+}
 
-# Linux arm64 via WSL
-BuildTargetWSL 'aarch64-unknown-linux-gnu' $Version 'linux-arm64'
+if ($Target -eq "all" -or $Target.Contains('win-x64')) {
+  # Windows x64
+  BuildTarget 'x86_64-pc-windows-msvc' $Version 'win-x64'
+}
+
+if ($Target -eq "all" -or $Target.Contains('win-arm64')) {
+  # Windows arm64
+  BuildTarget 'aarch64-pc-windows-msvc' $Version 'win-arm64'
+}
+
+if ($Target -eq "all" -or $Target.Contains('linux-arm64')) {
+  # Linux arm64 via WSL
+  BuildTargetWSL 'aarch64-unknown-linux-gnu' $Version 'linux-arm64'
+}
