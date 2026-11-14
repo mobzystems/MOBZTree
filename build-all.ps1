@@ -47,6 +47,25 @@ function BuildTarget([string]$Target, [string]$version, [string]$code) {
   Write-Output "`n===> $zip created`n"
 }
 
+function BuildTargetMac([string]$Target, [string]$version, [string]$code) {
+  [string]$release = "./releases/$($NAME)_$($code)_$($version)"
+  [string]$zip = "$($release).zip"
+
+  Write-Output "===> Building $code ($Target) via Mac..."
+
+  # Need zah -l here to force a login shell
+  ssh mobzmini.fritz.box "zsh -c -l 'cd ~/Projects/MOBZTree && git pull && npm install && npm run tauri build -- -- --target=$Target'"
+  scp "mobzmini.fritz.box:~/Projects/MOBZTree/src-tauri/target/$Target/release/$NAME" $release
+
+  if (Test-Path $zip -PathType Leaf) {
+    Write-Warning "Replacing '$zip'"
+    Remove-Item $zip
+  }
+  Compress-Archive $release $zip
+
+  Write-Output "`n===> $zip created`n"
+}
+
 function BuildTargetWSL([string]$Target, [string]$version, [string]$code) {
   [string]$release = "./releases/$($NAME)_$($code)_$($version)"
   [string]$zip = "$($release).zip"
@@ -55,6 +74,7 @@ function BuildTargetWSL([string]$Target, [string]$version, [string]$code) {
 
   Write-Output "===> Building $code ($Target) via WSL..."
 
+  # Need bash -i here to force an interactive shell
   &wsl --cd ~/MOBZTree -- bash -c -i "git pull && npm install && npm run tauri build -- -- --target=$Target"
   &wsl --cd ~/MOBZTree -- bash -c "cp ./src-tauri/target/$Target/release/$NAME ``wslpath `"$releases`"``/$($NAME)_$($code)_$($version)"
 
@@ -85,4 +105,9 @@ if ($Target -eq "all" -or $Target.Contains('win-arm64')) {
 if ($Target -eq "all" -or $Target.Contains('linux-arm64')) {
   # Linux arm64 via WSL
   BuildTargetWSL 'aarch64-unknown-linux-gnu' $Version 'linux-arm64'
+}
+
+if ($Target -eq "all" -or $Target.Contains('mac-arm64')) {
+  # Mac arm64 via Mac
+  BuildTargetMac 'aarch64-apple-darwin' $Version 'mac-arm64'
 }
