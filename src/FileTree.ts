@@ -44,7 +44,10 @@ export class TreeDirectory extends DiskItem {
   async loadTree(mustCancel: (path: string) => boolean): Promise<void> {
     // If we have a parent, append our name to theirs, otherwise use our own path
     this.fullPath = this.parentDirectory !== undefined
-      ? await Path.join(this.parentDirectory.fullPath, this.name)
+      // Don't use
+      // await Path.join(this.parentDirectory.fullPath, this.name)
+      // because that's a network request!
+      ? `${this.parentDirectory.fullPath}${Path.sep()}${this.name}`
       : this.name;
 
     if (mustCancel(this.fullPath))
