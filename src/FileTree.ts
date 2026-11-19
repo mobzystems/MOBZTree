@@ -28,6 +28,8 @@ export class TreeFile extends DiskItem {
   }
 }
 
+let _task_id = 1000;
+
 /**
  * A directory in a file treee
  */
@@ -44,7 +46,7 @@ export class TreeDirectory extends DiskItem {
   async loadTree(mustCancel: (path: string) => boolean): Promise<void> {
     // If we have a parent, append our name to theirs, otherwise use our own path
     this.fullPath = this.parentDirectory !== undefined
-      ? await Path.join(this.parentDirectory.fullPath, this.name)
+      ? `${this.parentDirectory.fullPath}${Path.sep()}${this.name}` // await Path.join(this.parentDirectory.fullPath, this.name)
       : this.name;
 
     if (mustCancel(this.fullPath))
@@ -52,7 +54,7 @@ export class TreeDirectory extends DiskItem {
 
     // console.info(`Loading ${this.fullPath}`);
 
-    const json = await invoke<string>("read_directory", { path: this.fullPath });
+    const json = await invoke<string>("read_directory", { path: this.fullPath, id: ++_task_id });
     const result = JSON.parse(json);
 
     if (typeof result === "string") {

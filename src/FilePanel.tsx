@@ -14,6 +14,7 @@ import {
 import { faFolderOpen as openIcon } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { f } from "./NumberFormat"
+import { invoke } from "@tauri-apps/api/core";
 
 // The minimum time between state updates when loading directoy trees
 const MIN_TIME_BETWEEN_UPDATES = 500;
@@ -363,7 +364,10 @@ function Heading(props: {
       buttons = <button className="button is-warning"
         title="Cancel loading the directory tree"
         disabled={props.status.cancel}
-        onClick={() => (props.status as LoadingState).cancel = true}
+        onClick={() => {
+          invoke('cancel_task', { id: 1000 });
+          (props.status as LoadingState).cancel = true;
+        }}
       >
         {props.status.cancel ? "Cancelled" : "Cancel"}
       </button>
