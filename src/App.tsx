@@ -99,7 +99,10 @@ Do you want to open that web page now?`
   useEffect(() => {
     console.info("Initializing app");
 
+    const appWindow = tauriWindow.getCurrentWindow();
+
     function applyTheme(theme: tauriWindow.Theme | null) {
+      console.info("Theme changed");
       if (theme !== null) {
         if (theme === "dark")
           setIsDarkTheme(true);
@@ -108,9 +111,8 @@ Do you want to open that web page now?`
       }
     }
 
+    // Handle all async stuff
     (async function () {
-      const appWindow = tauriWindow.getCurrentWindow();
-
       const appVersion = await tauriApp.getVersion();
       const appName = await tauriApp.getName();
 
@@ -123,12 +125,6 @@ Do you want to open that web page now?`
       // Get initial theme ('light' | 'dark' | null)
       const theme = await appWindow.theme();
       applyTheme(theme);
-
-      // Listen for system theme changes
-      const unlisten = await appWindow.onThemeChanged(({ payload: theme }) => {
-        // console.log(`Theme changed to: ${theme}`);
-        applyTheme(theme);
-      });
 
       // Parse the command line. To pass arguments, call
       // npm run tauri dev -- -- -- [left-path [right-path]]
@@ -161,10 +157,22 @@ Do you want to open that web page now?`
 
       // Launch an update check, but don't await it!
       getUpdateVersion(appName).then(version => setUpdateVersion(version));
-
-      // This is actually not returned. TODO
-      return unlisten;
     })();
+
+    // Listen for system theme changes
+    const themeUnlisten = appWindow.onThemeChanged(({ payload: theme }) => {
+      // console.log(`Theme changed to: ${theme}`);
+      applyTheme(theme);
+    });
+
+    // Return a function that unlistens everything
+    return () => {
+      console.info("App: cleanup");
+      themeUnlisten.then((unlisten) => {
+        unlisten();
+        console.info("Unlistened theme change");
+      });
+    }
   }, []);
 
   let infoString = info === undefined
@@ -281,5 +289,3 @@ Do you want to open that web page now?`
       </div>}
   </>;
 }
-
-
