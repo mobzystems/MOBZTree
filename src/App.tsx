@@ -51,6 +51,7 @@ export default function App() {
   const [showExtra, setShowExtra] = useState(true);
 
   const [currentDirectory, setCurrentDirectory] = useState<string>();
+  const [currentFile, setCurrentFile] = useState<string>();
 
   const [reportDialogVisible, setReportDialogVisible] = useState(false);
 
@@ -73,6 +74,13 @@ export default function App() {
     // TODO: if syncing, i.e. if both file panels have a tree loaded
     // console.info(`Changing current directory from '${currentDirectory}' to '${relativePath}'`)
     setCurrentDirectory(relativePath);
+    setCurrentFile(undefined);
+  }
+
+  function changeFile(filename: string) {
+    // TODO: if syncing, i.e. if both file panels have a tree loaded
+    // console.info(`Changing current directory from '${currentDirectory}' to '${relativePath}'`)
+    setCurrentFile(filename);
   }
 
   async function updateAvailable(version: Version) {
@@ -268,8 +276,8 @@ Do you want to open that web page now?`
         </div>
       </div>
       <div className="main">
-        <FilePanel name="Left" path={initialLeftPath} onLoaded={setLeftTree} diff={diff} options={filterOptions} requestedCurrentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
-        <FilePanel name="Right" path={initialRightPath} onLoaded={setRightTree} diff={diff} options={filterOptions} requestedCurrentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} />
+        <FilePanel name="Left" path={initialLeftPath} onLoaded={setLeftTree} diff={diff} options={filterOptions} requestedCurrentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} requestedCurrentFile={currentFile} onChangeCurrentFile={changeFile} />
+        <FilePanel name="Right" path={initialRightPath} onLoaded={setRightTree} diff={diff} options={filterOptions} requestedCurrentDirectory={currentDirectory} onChangeCurrentDirectory={changeDir} requestedCurrentFile={currentFile} onChangeCurrentFile={changeFile} />
       </div>
       {/* <div className="status">
       <div className="buttons are-small">

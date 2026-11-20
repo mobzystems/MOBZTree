@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useState } from "react";
+import { ReactElement, useEffect, useRef, useState } from "react";
 import { open } from '@tauri-apps/plugin-dialog';
 import * as Path from '@tauri-apps/api/path';
 import { TreeDirectory, FileTree, TreeFile } from "./FileTree";
@@ -70,7 +70,9 @@ export default function FilePanel(props: {
   diff: TreeDiff | undefined,
   options: FilterOptions,
   requestedCurrentDirectory: string | undefined,
-  onChangeCurrentDirectory: (relativePath: string) => void
+  onChangeCurrentDirectory: (relativePath: string) => void,
+  requestedCurrentFile: string | undefined,
+  onChangeCurrentFile: (filename: string) => void,
 }) {
   const [status, setStatus] = useState<State>(Clear);
 
@@ -179,6 +181,8 @@ export default function FilePanel(props: {
                 directoryPath={status.currentDirectory.fullPath}
                 files={status.currentDirectory.files}
                 options={props.options}
+                selectedFileName={props.requestedCurrentFile}
+                onFileChanged={props.onChangeCurrentFile}
               />}
           </tbody>
         </table>
@@ -259,7 +263,9 @@ function FileList(props: {
   diff: TreeDiff | undefined,
   directoryPath: string,
   files: TreeFile[],
-  options: FilterOptions
+  options: FilterOptions,
+  selectedFileName: string | undefined,
+  onFileChanged: (filename: string) => void
 }) {
   return props.files.map(file =>
     <FileItem key={file.name}
@@ -268,6 +274,8 @@ function FileList(props: {
       directoryPath={props.directoryPath}
       file={file}
       options={props.options}
+      selected={file.name === props.selectedFileName}
+      onFileChanged={props.onFileChanged}
     />
   )
 }
@@ -277,12 +285,22 @@ function FileItem(props: {
   diff: TreeDiff | undefined,
   directoryPath: string,
   file: TreeFile,
-  options: FilterOptions
+  options: FilterOptions,
+  selected: boolean,
+  onFileChanged: (filename: string) => void
 }) {
   const relativePath = props.tree.relativePath(props.directoryPath + Path.sep() + props.file.name);
   const diffMap = props.diff?.diffMap.get(relativePath);
   const [text, style] = diffMap === undefined ? [undefined, undefined] : diffMap;
   const status = (style !== undefined && <div className={`tag ${style}`}>{text}</div>) || "-";
+
+  const currentFile = useRef(null);
+
+  useEffect(() => {
+    if (props.selected && currentFile.current !== null) {
+      (currentFile.current as any).scrollIntoView();
+    }
+  }, [props.selected]);
 
   if (text !== undefined) {
     // Suppress showing files that were filtered out
@@ -294,7 +312,7 @@ function FileItem(props: {
       return undefined;
   }
 
-  return <tr>
+  return <tr className={props.selected ? "is-selected" : ""} onClick={() => props.onFileChanged(props.file.name)} ref={currentFile}>
     <td>
       <span className="icon-text">
         <span className="icon has-text-info">
