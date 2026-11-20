@@ -48,10 +48,12 @@ function BuildTarget([string]$target, [string]$version, [string]$code) {
 }
 
 <#
-  Build a Mac version via ssh to (a/my) Mac. WARNING: The dmg bundle will allways have the *current* version number of the app,
-  not the one passed on the command line!
+  Build a Mac version via ssh to (a/my) Mac.
+  
+  WARNING 1: The dmg bundle will allways have the *current* version number
+             of the app, not the one passed on the command line!
 
-  WARNING: to create the dmg bundle, you must be logged in to the Mac!
+  WARNING 2: to create the dmg bundle, you must be logged in to the Mac!
 #>
 function BuildTargetMac([string]$target, [string]$version, [string]$code) {
   [string]$release = "./releases/$($NAME)_$($code)_$($version)"
@@ -60,10 +62,10 @@ function BuildTargetMac([string]$target, [string]$version, [string]$code) {
 
   Write-Output "===> Building $code ($target) via Mac..."
 
-  # Need zah -l here to force a login shell
+  # Need zsh -l here to force a login shell
   # For MacOS, we need to build a bundle
-  ssh mobzmini.fritz.box "zsh -c -l 'cd ~/Projects/MOBZTree && git pull && npm install && npm run tauri build -- --target=$target --bundles dmg'"
-  scp "mobzmini.fritz.box:~/Projects/MOBZTree/src-tauri/target/$target/release/bundle/dmg/$($NAME)_$($version)_aarch64.dmg" $dmg
+  ssh mobzmini "zsh -c -l 'cd ~/Projects/MOBZTree && git pull && npm install && npm run tauri build -- --target=$target --bundles dmg'"
+  scp "mobzmini:~/Projects/MOBZTree/src-tauri/target/$target/release/bundle/dmg/$($NAME)_$($version)_aarch64.dmg" $dmg
 
   # TODO: dmg's seem to be pretty compressed so maybe zipping is superfluous?
   if (Test-Path $zip -PathType Leaf) {
