@@ -9,6 +9,7 @@ import * as tauriWindow from '@tauri-apps/api/window';
 import * as tauriCli from '@tauri-apps/plugin-cli';
 import * as tauriOs from '@tauri-apps/plugin-os';
 import * as tauriOpen from '@tauri-apps/plugin-opener';
+import * as tauriEvent from '@tauri-apps/api/event';
 
 import FilePanel, { FilterOptions } from "./FilePanel";
 import { FileTree } from "./FileTree";
@@ -99,7 +100,10 @@ Do you want to open that web page now?`
   useEffect(() => {
     console.info("Initializing app");
 
+    const appWindow = tauriWindow.getCurrentWindow();
+
     function applyTheme(theme: tauriWindow.Theme | null) {
+      console.info("Theme changed");
       if (theme !== null) {
         if (theme === "dark")
           setIsDarkTheme(true);
@@ -108,9 +112,8 @@ Do you want to open that web page now?`
       }
     }
 
+    // Handle all async stuff
     (async function () {
-      const appWindow = tauriWindow.getCurrentWindow();
-
       const appVersion = await tauriApp.getVersion();
       const appName = await tauriApp.getName();
 
@@ -123,12 +126,6 @@ Do you want to open that web page now?`
       // Get initial theme ('light' | 'dark' | null)
       const theme = await appWindow.theme();
       applyTheme(theme);
-
-      // Listen for system theme changes
-      const unlisten = await appWindow.onThemeChanged(({ payload: theme }) => {
-        // console.log(`Theme changed to: ${theme}`);
-        applyTheme(theme);
-      });
 
       // Parse the command line. To pass arguments, call
       // npm run tauri dev -- -- -- [left-path [right-path]]
@@ -161,10 +158,30 @@ Do you want to open that web page now?`
 
       // Launch an update check, but don't await it!
       getUpdateVersion(appName).then(version => setUpdateVersion(version));
-
-      // This is actually not returned. TODO
-      return unlisten;
     })();
+
+    // Listen for system theme changes
+    const themeUnlisten = appWindow.onThemeChanged(({ payload: theme }) => {
+      // console.log(`Theme changed to: ${theme}`);
+      applyTheme(theme);
+    });
+
+    const eventUnlisten = tauriEvent.listen("start_read_directory", (event) => {
+      console.info(event);
+    });
+
+    // Return a function that unlistens everything
+    return () => {
+      console.info("App: cleanup");
+      themeUnlisten.then((unlisten) => {
+        unlisten();
+        console.info("Unlistened theme change");
+      });
+      eventUnlisten.then((unlisten) => {
+        unlisten(); 
+        console.log("Unlistened event");
+      });
+    }
   }, []);
 
   let infoString = info === undefined
@@ -281,5 +298,3 @@ Do you want to open that web page now?`
       </div>}
   </>;
 }
-
-
