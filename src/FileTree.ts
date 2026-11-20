@@ -69,20 +69,20 @@ export class TreeDirectory extends DiskItem {
     this.files = files.map(file => new TreeFile(file.name, file.size, file.time_modified)).sort((f1, f2) => f1.name.localeCompare(f2.name, 'en-US'));
     this.directories = [];
 
-    for (const dir of directories) {
-      // if (mustCancel(dir.name))
-      //   return; // throw new Error("Loading was cancelled");
+    // for (const dir of directories) {
+    //   // if (mustCancel(dir.name))
+    //   //   return; // throw new Error("Loading was cancelled");
 
-      const directory = new TreeDirectory(this, dir.name, dir.time_modified);
-      try {
-        await directory.loadTree(mustCancel);
-        this.directories.push(directory);
-      }
-      catch (e: any) {
-        console.error(`Skipping directory ${directory.name} because ${e.toString()}`)
-      }
-    }
-    this.directories.sort((d1, d2) => d1.name.localeCompare(d2.name, 'en-US'));
+    //   const directory = new TreeDirectory(this, dir.name, dir.time_modified);
+    //   try {
+    //     await directory.loadTree(mustCancel);
+    //     this.directories.push(directory);
+    //   }
+    //   catch (e: any) {
+    //     console.error(`Skipping directory ${directory.name} because ${e.toString()}`)
+    //   }
+    // }
+    // this.directories.sort((d1, d2) => d1.name.localeCompare(d2.name, 'en-US'));
   }
 }
 

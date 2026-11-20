@@ -1,7 +1,10 @@
 use std::collections::HashMap;
+use std::io::Error;
+use std::path::MAIN_SEPARATOR_STR;
 use std::sync::LazyLock;
 use std::sync::Mutex;
-use std::io::Error;
+
+use tauri::{AppHandle, Emitter};
 
 /*
    Shared state between calls to read_directory
@@ -10,7 +13,8 @@ use std::io::Error;
 
     MUTEX_TASK_MAP.lock().unwrap() yields the HashMap in a thread-safe way
 */
-static MUTEX_TASK_MAP: LazyLock<Mutex<HashMap<i32, bool>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+static MUTEX_TASK_MAP: LazyLock<Mutex<HashMap<i32, bool>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 #[tauri::command]
 fn cancel_task(id: i32) -> () {
@@ -18,15 +22,15 @@ fn cancel_task(id: i32) -> () {
     let mut task_map = MUTEX_TASK_MAP.lock().unwrap();
     match (*task_map).get(&id) {
         // We know this id
-        Some(canceled) => { 
+        Some(canceled) => {
             if *canceled {
                 println!("Error: unable to cancel task #{id}: task was already canceled")
-            } else { 
+            } else {
                 // Set the task to canceled
                 (*task_map).insert(id, true);
-                println!("Canceled task #{id}"); 
-            } 
-        },
+                println!("Canceled task #{id}");
+            }
+        }
         None => println!("Error: unable to cancel task #{id}: task not found"),
     }
 }
@@ -37,16 +41,24 @@ struct FileSystemEntry {
     is_directory: bool,
     size: u64,
     time_modified: u64,
+    entries: Vec<FileSystemEntry>,
 }
 
-fn read_directory_impl(path: &str, task_id: i32) -> Result<Vec<FileSystemEntry>, Error> {
+fn read_directory_impl(
+    app: &AppHandle,
+    path: &str,
+    task_id: i32,
+) -> Result<Vec<FileSystemEntry>, Error> {
+    // app.emit("start_read_directory", path).unwrap();
+    println!("Reading directory {path}");
+
     let result = std::fs::read_dir(path);
     if result.is_err() {
         let error_message = format!(
             "[{task_id}]: Failed to read directory: {}",
             result.err().unwrap()
         );
-        return Err(Error::other(error_message)); // serde_json::to_string(&error_message).unwrap();
+        return Err(Error::other(error_message));
     }
     let mut entries = Vec::new();
     for entry in result.unwrap() {
@@ -60,7 +72,7 @@ fn read_directory_impl(path: &str, task_id: i32) -> Result<Vec<FileSystemEntry>,
                         return Ok(Vec::new());
                     }
                     // println!("Canceled = {canceled}");
-                },
+                }
                 None => println!("Error: task #{task_id} not found"),
             }
         }
@@ -70,8 +82,8 @@ fn read_directory_impl(path: &str, task_id: i32) -> Result<Vec<FileSystemEntry>,
             let meta = meta.unwrap();
             if !meta.is_symlink() {
                 let name = entry.file_name().to_string_lossy().into_owned();
-                entries.push(FileSystemEntry {
-                    name: name,
+                let mut entry = FileSystemEntry {
+                    name: name.clone(),
                     is_directory: meta.is_dir(),
                     size: meta.len(),
                     time_modified: meta
@@ -81,7 +93,17 @@ fn read_directory_impl(path: &str, task_id: i32) -> Result<Vec<FileSystemEntry>,
                         .duration_since(std::time::SystemTime::UNIX_EPOCH)
                         .expect("Failed to calculate duration")
                         .as_secs(),
-                });
+                    entries: Vec::new(),
+                };
+                if entry.is_directory {
+                    entry.entries = read_directory_impl(
+                        app,
+                        &format!("{path}{MAIN_SEPARATOR_STR}{name}"),
+                        task_id,
+                    )
+                    .unwrap_or_default();
+                }
+                entries.push(entry);
             }
         }
     }
@@ -89,28 +111,36 @@ fn read_directory_impl(path: &str, task_id: i32) -> Result<Vec<FileSystemEntry>,
 }
 
 #[tauri::command]
-fn read_directory(path: &str, id: i32) -> String {
+fn read_directory(app: AppHandle, path: &str, id: i32) -> String {
     // Add the supplied ID to the task map
     {
         let mut task_map = MUTEX_TASK_MAP.lock().unwrap();
         (*task_map).insert(id, false);
     }
-    println!("Reading directory '{path}' with id #{id}");
+    // println!("Reading directory '{path}' with id #{id}");
 
-    let entries = read_directory_impl(path, id);
+    let path2 = String::from(path);
+
+    let task = std::thread::spawn(move || {
+        read_directory_impl(&app, &path2, id)
+    });
+
+    // TODO: this can fail!
+    let entries = task.join().unwrap();
+
     // Remove ourselves from the task map
     {
         let mut task_map = MUTEX_TASK_MAP.lock().unwrap();
         match (*task_map).remove(&id) {
-            Some(canceled) => println!("Removed task #{id}, canceled was {canceled}"),
-            None => println!("Error: failed to remove task #{id}")
+            Some(_canceled) => (), // println!("Removed task #{id}, canceled was {canceled}"),
+            None => println!("Error: failed to remove task #{id}"),
         }
     }
 
     // Return the entries or an error
     match entries {
         Ok(entries) => serde_json::to_string(&entries).unwrap(),
-        Err(e) => serde_json::to_string(&format!("{e}")).unwrap()
+        Err(e) => serde_json::to_string(&format!("{e}")).unwrap(),
     }
 }
 
@@ -123,6 +153,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        // Steal the app object here:
+        // .setup(|app| APP = app.handle())
         .invoke_handler(tauri::generate_handler![read_directory, cancel_task])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
