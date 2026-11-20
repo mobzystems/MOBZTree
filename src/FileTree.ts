@@ -11,6 +11,11 @@ interface DirEntry {
   time_modified: number; // Seconds since UNIX epoch
 }
 
+interface ReadDirResult {
+  error_message: string;
+  entries: DirEntry[];
+}
+
 /**
  * Base class for a file and a directory
  */
@@ -55,15 +60,14 @@ export class TreeDirectory extends DiskItem {
 
     // console.info(`Loading ${this.fullPath}`);
 
-    const json = await invoke<string>("read_directory", { path: this.fullPath });
-    const result = JSON.parse(json);
+    const result = await invoke<ReadDirResult>("read_directory", { path: this.fullPath });
 
-    if (typeof result === "string") {
+    if (result.error_message !== "") {
       // Handle error case
-      throw new Error(result);
+      throw new Error(result.error_message);
     }
 
-    const entries = result as DirEntry[];
+    const entries = result.entries;
     const files = entries.filter(file => !file.is_directory);
     const directories = entries?.filter(file => file.is_directory);
 
