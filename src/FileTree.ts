@@ -11,11 +11,6 @@ interface DirEntry {
   time_modified: number; // Seconds since UNIX epoch
 }
 
-interface ReadDirResult {
-  error_message: string;
-  entries: DirEntry[];
-}
-
 /**
  * Base class for a file and a directory
  */
@@ -56,18 +51,18 @@ export class TreeDirectory extends DiskItem {
       : this.name;
 
     if (mustCancel(this.fullPath))
-      return; // throw new Error("Loading was cancelled");
+      return;
 
-    // console.info(`Loading ${this.fullPath}`);
-
-    const result = await invoke<ReadDirResult>("read_directory", { path: this.fullPath });
-
-    if (result.error_message !== "") {
+    let entries: DirEntry[];
+    
+    try {
+      entries = await invoke<DirEntry[]>("read_directory", { path: this.fullPath });
+    }
+    catch (e: any) {
       // Handle error case
-      throw new Error(result.error_message);
+      throw new Error(e.toString());
     }
 
-    const entries = result.entries;
     const files = entries.filter(file => !file.is_directory);
     const directories = entries?.filter(file => file.is_directory);
 
@@ -75,9 +70,6 @@ export class TreeDirectory extends DiskItem {
     this.directories = [];
 
     for (const dir of directories) {
-      // if (mustCancel(dir.name))
-      //   return; // throw new Error("Loading was cancelled");
-
       const directory = new TreeDirectory(this, dir.name, dir.time_modified);
       try {
         await directory.loadTree(mustCancel);

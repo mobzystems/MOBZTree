@@ -22,18 +22,12 @@ struct FileSystemEntry {
     time_modified: u64,
 }
 
-#[derive(Debug, serde::Serialize)]
-struct ReadDirectoryResult {
-    error_message: String,
-    entries: Vec<FileSystemEntry>,
-}
-
 #[tauri::command]
-fn read_directory(path: &str) -> ReadDirectoryResult {
+fn read_directory(path: &str) -> Result<Vec<FileSystemEntry>, String> {
     let result = std::fs::read_dir(path);
     if result.is_err() {
         let error_message = format!("Failed to read directory: {}", result.err().unwrap());
-        return ReadDirectoryResult { error_message: error_message, entries: Vec::new() }
+        return Err(error_message);
     }
     let mut entries = Vec::new();
     for entry in result.unwrap() {
@@ -57,7 +51,7 @@ fn read_directory(path: &str) -> ReadDirectoryResult {
             }
         }
     }
-    return ReadDirectoryResult { error_message: String::new(), entries: entries }
+    return Ok(entries);
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
