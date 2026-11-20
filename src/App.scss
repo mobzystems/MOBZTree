@@ -221,3 +221,7 @@ table.nowrap>tbody>tr>td {
 .level.is-mobile>* {
   flex-direction: row;
 }
+
+.nowrap {
+  text-wrap: nowrap;
+}

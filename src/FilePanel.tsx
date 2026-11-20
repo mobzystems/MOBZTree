@@ -112,8 +112,8 @@ export default function FilePanel(props: {
           // Handle error case
           setStatus({ state: "error", errorPath: status.requestedPath, errorMessage: ("message" in e ? e.message : e.toString()) })
         }
-      // } else if (status.state === "loaded") {
-      //   status.currentDirectory = status.tree;
+        // } else if (status.state === "loaded") {
+        //   status.currentDirectory = status.tree;
       }
     })();
   }, [status]);
@@ -185,11 +185,7 @@ export default function FilePanel(props: {
       }
     </div>
     <div className="status">
-      <div className="level is-mobile">
-        <div className="level-left">
-          <StatusBar status={status} loadingPath={loadingPath} />
-        </div>
-      </div>
+      <StatusBar status={status} loadingPath={loadingPath} />
     </div>
   </div>
 }
@@ -426,26 +422,33 @@ function Heading(props: {
 function StatusBar(props: { status: State, loadingPath: string | undefined }) {
   switch (props.status.state) {
     case "clear":
-      return <>No directory selected</>;
-    case "loading":
-      // console.info(`Rendering status bar with ${props.loadingPath}`);
-      return <span className="is-italic">Loading {props.loadingPath ?? props.status.requestedPath}...</span>;
-    case "loaded":
-      return <>
-        <div className="level-item">
-          <div className="tags has-addons">
-            <span className="tag is-warning">Dirs: {props.status.currentDirectory.directories.length}</span>
-            <span className="tag is-info">Files: {props.status.currentDirectory.files.length}</span>
+      return <div className="level is-mobile">
+        <div className="level-left">
+          <div className="level-item">
+            <span className="is-italic">No directory selected</span>
           </div>
         </div>
-        <div className="level-item">
-          {props.status.message !== undefined
-            ? <span className="has-text-danger">{props.status.message}</span>
-            : <span className="is-small">{`...${Path.sep()}${props.status.tree.relativePath(props.status.currentDirectory.fullPath)}`}</span>
-          }
+      </div>;
+    case "loading":
+      return <span className="is-italic is-float-right nowrap">{props.loadingPath ?? props.status.requestedPath}...</span>
+    case "loaded":
+      return <div className="level is-mobile">
+        <div className="level-left">
+          <div className="level-item">
+            <div className="tags has-addons">
+              <span className="tag is-warning">Dirs: {props.status.currentDirectory.directories.length}</span>
+              <span className="tag is-info">Files: {props.status.currentDirectory.files.length}</span>
+            </div>
+          </div>
+          <div className="level-item">
+            {props.status.message !== undefined
+              ? <span className="has-text-danger">{props.status.message}</span>
+              : <span className="is-small">{`...${Path.sep()}${props.status.tree.relativePath(props.status.currentDirectory.fullPath)}`}</span>
+            }
+          </div>
         </div>
-      </>;
+      </div>;
     case "error":
-      return <span className="has-text-danger">Error: {props.status.errorMessage}</span>
+      return <span className="has-text-danger">There was an error loading the directory</span>
   }
 }
