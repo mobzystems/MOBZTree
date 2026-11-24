@@ -222,9 +222,6 @@ function DirectoryItem(props: {
   options: FilterOptions
 }) {
   const relativePath = props.tree.relativePath(props.directory.fullPath);
-  // const diffState = props.diff === undefined
-  //   ? undefined
-  //   : props.diff.getState(relativePath, false, false);
   const diffState = props.diff?.diffMap.get(relativePath);
   const status = (diffState && <div className={`tag ${diffState[1]}`}>{diffState[0]}</div>) || "-";
 
@@ -274,10 +271,45 @@ function FileList(props: {
       directoryPath={props.directoryPath}
       file={file}
       options={props.options}
-      selected={file.name === props.selectedFileName}
+      selectedFilename={props.selectedFileName}
       onFileChanged={props.onFileChanged}
     />
   )
+}
+
+function duration(s1: number, s2: number): string {
+  if (s1 > s2) {
+    [s1, s2] = [s2, s1];
+  }
+
+  const d1 = new Date(s1 * 1000);
+  const d2 = new Date(s2 * 1000);
+
+  let s = "";
+
+  const y = d2.getFullYear() - d1.getFullYear();
+  if (y === 1)
+    s += "1 year, ";
+  else if (y > 1)
+    s += `${y} years, `;
+
+  const m = d2.getMonth() - d1.getMonth();
+  if (m === 1)
+    s += "1 month, ";
+  else if (m > 1)
+    s += `${m} months, `;
+
+  const d = d2.getMonth() - d1.getMonth();
+  if (d === 1)
+    s += "1 day, ";
+  else if (d > 1)
+    s += `${d} days, `;
+
+  if (s === "")
+    return s;
+
+  // Cut off last ", "
+  return s.substring(0, s.length - 2);
 }
 
 function FileItem(props: {
@@ -286,9 +318,16 @@ function FileItem(props: {
   directoryPath: string,
   file: TreeFile,
   options: FilterOptions,
-  selected: boolean,
+  selectedFilename: string | undefined,
   onFileChanged: (filename: string) => void
 }) {
+  // Are we the requested file?
+  const isSelected = props.selectedFilename !== undefined && props.selectedFilename === props.file.name;
+
+  // Are we selected? Always start with false. If we select ourselves we'll
+  // set this to true.
+  const [selected, setSelected] = useState(false);
+
   const relativePath = props.tree.relativePath(props.directoryPath + Path.sep() + props.file.name);
   const diffMap = props.diff?.diffMap.get(relativePath);
   const [text, style] = diffMap === undefined ? [undefined, undefined] : diffMap;
@@ -296,11 +335,49 @@ function FileItem(props: {
 
   const currentFile = useRef(null);
 
-  useEffect(() => {
-    if (props.selected && currentFile.current !== null) {
-      (currentFile.current as any).scrollIntoView();
+  const companion = props.diff?.getCompanion(props.tree, relativePath);
+  let extraSizeStatus: string = "";
+  let extraTimeStatus: string = "";
+
+  if (companion !== undefined && "size" in companion) {
+    const otherFile = companion as TreeFile;
+
+    if (props.options.compareSize) {
+      if (props.file.size < otherFile.size) {
+        extraSizeStatus = ` (${f(props.file.size - otherFile.size)})`;
+      } else if (props.file.size > otherFile.size) {
+        extraSizeStatus = ` (+${f(props.file.size - otherFile.size)})`;
+      }
     }
-  }, [props.selected]);
+
+    if (props.options.compareTime) {
+      if (props.file.modifiedTime < otherFile.modifiedTime) {
+        extraTimeStatus = ` (${duration(props.file.modifiedTime, otherFile.modifiedTime)})`;
+      } else if (props.file.modifiedTime > otherFile.modifiedTime) {
+        extraTimeStatus = ` (+${duration(props.file.modifiedTime, otherFile.modifiedTime)})`;
+      }
+    }
+  }
+
+  // Scroll the selected element into view, but only if we are the current file
+  // and we're not selected yet
+  useEffect(() => {
+    if (props.selectedFilename === props.file.name && currentFile.current !== null) {
+      if (!selected) {
+        (currentFile.current as Element).scrollIntoView();
+        setSelected(true);
+      }
+    } else {
+      setSelected(false);
+    }
+  }, [props.selectedFilename, selected]);
+
+  // Notify others that we have selected ourselves
+  function selectFileName(filename: string) {
+    // Mark ourselves as selected so we don't scrollIntoView
+    setSelected(true);
+    props.onFileChanged(filename);
+  }
 
   if (text !== undefined) {
     // Suppress showing files that were filtered out
@@ -312,7 +389,7 @@ function FileItem(props: {
       return undefined;
   }
 
-  return <tr className={props.selected ? "is-selected" : ""} onClick={() => props.onFileChanged(props.file.name)} ref={currentFile}>
+  return <tr className={isSelected ? "is-selected" : ""} onClick={() => selectFileName(props.file.name)} ref={currentFile}>
     <td>
       <span className="icon-text">
         <span className="icon has-text-info">
@@ -324,8 +401,8 @@ function FileItem(props: {
       </span>
     </td>
     <td align="center">{status}</td>
-    <td align="right">{f(props.file.size)}</td>
-    <td>{new Date(props.file.modifiedTime * 1000).toLocaleString()}</td>
+    <td align="right">{f(props.file.size)} {extraSizeStatus !== "" && <span className="tag is-dark is-small">{extraSizeStatus.trim()}</span>}</td>
+    <td>{new Date(props.file.modifiedTime * 1000).toLocaleString()}{extraTimeStatus}</td>
   </tr>
 }
 

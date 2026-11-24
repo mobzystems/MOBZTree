@@ -1,4 +1,4 @@
-import { FileTree, TreeDirectory } from "./FileTree";
+import { DiskItem, FileTree, TreeDirectory } from "./FileTree";
 import * as Path from '@tauri-apps/api/path';
 
 // The result of a comparison of two items cen be one of these
@@ -131,5 +131,18 @@ export class TreeDiff {
     this.processDir(diffs, this.rightTree, this.rightTree, this.leftTree, compareSize, compareTime);
 
     return diffs;
+  }
+
+  getCompanion(self: FileTree, relativePath: string): DiskItem | undefined {
+    let tree: FileTree;
+    if (self === this.leftTree)
+      tree = this.rightTree;
+    else if (self === this.rightTree)
+      tree = this.leftTree;
+    else
+      throw new Error("Specified tree not found in diff");
+
+    const companion = tree.entryMap.get(relativePath);
+    return companion;
   }
 }
